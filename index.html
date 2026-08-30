@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kishore Finance - Comprehensive Management System</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ChartJS for Beautiful Data Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Flatpickr for strict DD/MM/YYYY date formatting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="dark-theme">
+
+    <!-- 1. SECURE LOGIN OVERLAY -->
+    <div id="login-overlay" class="login-overlay active">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo-wrapper">
+                    <i class="fa-solid fa-building-columns"></i>
+                </div>
+                <h2>Kishore Finance</h2>
+                <p id="login-card-subtitle">Secure Access Portal</p>
+            </div>
+
+            <!-- Panel: Password Login -->
+            <div id="panel-pwd-login" class="login-panel">
+                <form id="pwd-login-form">
+                    <div class="form-group">
+                        <label for="login-username"><i class="fa-solid fa-user"></i> Username</label>
+                        <input type="text" id="login-username" placeholder="Enter admin username" autocomplete="username" required>
+                    </div>
+                    <div class="form-group password-group margin-top-sm">
+                        <label for="login-password"><i class="fa-solid fa-lock"></i> Password</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password" required>
+                            <button type="button" id="toggle-password-visibility" class="toggle-password">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="error-message" id="login-error-msg"></div>
+                    <button type="submit" class="btn btn-primary login-btn" style="width:100%; margin-top:20px;">Secure Login <i class="fa-solid fa-right-to-bracket"></i></button>
+                </form>
+            </div>
+
+            <div class="login-footer">
+                <p>&copy; 2026 Kishore Finance. Secure Terminal.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. MAIN APP CONTAINER -->
+    <div id="app-container" class="app-container">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-box">
+                    <i class="fa-solid fa-building-columns text-gradient"></i>
+                </div>
+                <div class="brand-details">
+                    <h1>Kishore Finance</h1>
+                    <span class="badge badge-online">Secure System</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <ul>
+                    <li class="menu-item active" data-target="dashboard">
+                        <a href="#dashboard">
+                            <i class="fa-solid fa-chart-pie"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-target="customers">
+                        <a href="#customers">
+                            <i class="fa-solid fa-users"></i>
+                            <span>Customers</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-target="loans">
+                        <a href="#loans">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                            <span>Loan Accounts</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-target="collections">
+                        <a href="#collections">
+                            <i class="fa-solid fa-receipt"></i>
+                            <span>Collections</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-target="reports">
+                        <a href="#reports">
+                            <i class="fa-solid fa-file-invoice-dollar"></i>
+                            <span>Reports</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-target="settings">
+                        <a href="#settings">
+                            <i class="fa-solid fa-gears"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile-summary">
+                    <div class="user-avatar">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </div>
+                    <div class="user-info">
+                        <h4 id="display-admin-name">Admin User</h4>
+                        <p>Super Administrator</p>
+                    </div>
+                </div>
+                <button id="btn-logout" class="btn-logout-sidebar" title="Log Out Account">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN MAIN PANEL -->
+        <main class="main-panel">
+            <!-- TOP HEADER -->
+            <header class="main-header">
+                <div class="header-left">
+                    <button class="btn-toggle-sidebar" id="sidebar-toggle-btn">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h2 class="header-title" id="page-title-heading">Dashboard Overview</h2>
+                </div>
+                <div class="header-right">
+                    <div class="date-time-widget">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span id="current-dateTime">Aug 18, 2026 23:06:19 PM</span>
+                    </div>
+                    <div class="quick-action-dropdown">
+                        <button class="btn btn-gradient btn-sm" id="btn-quick-new-collection">
+                            <i class="fa-solid fa-plus-circle"></i> Quick Pay
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- APP SCROLLABLE CONTENT BODY -->
+            <div class="content-body">
+                
+                <!-- ==================== DASHBOARD SECTION ==================== -->
+                <section id="dashboard" class="app-section active">
+                    <!-- KPI GRID -->
+                    <div class="kpi-grid">
+                        <!-- 1. Total Customers -->
+                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('customers')" title="Click to view Customers">
+                            <div class="kpi-icon icon-cyan">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Total Customers</h3>
+                                <span class="kpi-val" id="kpi-total-customers">0</span>
+                                <span class="kpi-trend trend-up"><i class="fa-solid fa-arrow-up"></i> Active Clients</span>
+                            </div>
+                        </div>
+
+                        <!-- 2. Assigned Loans -->
+                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('loans')" title="Click to view Loan Accounts">
+                            <div class="kpi-icon icon-indigo">
+                                <i class="fa-solid fa-file-invoice-dollar"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Assigned Loans</h3>
+                                <span class="kpi-val text-indigo" id="kpi-assigned-loans">0</span>
+                                <span class="kpi-trend trend-up" id="kpi-assigned-loans-count">0 Active Contracts</span>
+                            </div>
+                        </div>
+
+                        <!-- 3. Blocked Customers -->
+                        <div class="kpi-card glass" style="cursor: pointer;" onclick="filterBlockedCustomersFromKPI()" title="Click to view Blocked Customers">
+                            <div class="kpi-icon icon-rose">
+                                <i class="fa-solid fa-user-slash"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Blocked Customers</h3>
+                                <span class="kpi-val text-rose" id="kpi-blocked-customers">0</span>
+                                <span class="kpi-trend trend-down" id="kpi-blocked-customers-sub"><i class="fa-solid fa-ban"></i> Restricted Accounts</span>
+                            </div>
+                        </div>
+
+                        <!-- 4. Today's Collection -->
+                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('collections')" title="Click to view Collections">
+                            <div class="kpi-icon icon-teal">
+                                <i class="fa-solid fa-calendar-day"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Today's Collection</h3>
+                                <span class="kpi-val text-teal" id="kpi-todays-collection">₹0.00</span>
+                                <span class="kpi-trend trend-up" id="kpi-todays-collection-count">0 Transactions</span>
+                            </div>
+                        </div>
+
+                        <!-- 5. Pending Payments -->
+                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('reports')" title="Click to view in Reports">
+                            <div class="kpi-icon icon-amber">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Pending Payments</h3>
+                                <span class="kpi-val text-amber" id="kpi-pending-payments">₹0.00</span>
+                                <span class="kpi-trend trend-down" id="kpi-pending-payments-count"><i class="fa-solid fa-triangle-exclamation"></i> 0 Collections Pending</span>
+                            </div>
+                        </div>
+
+                        <!-- 6. Overdue Dues -->
+                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('reports')" title="Click to view in Reports">
+                            <div class="kpi-icon icon-rose">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Overdue Dues</h3>
+                                <span class="kpi-val text-rose" id="kpi-overdue-balance">₹0.00</span>
+                                <span class="kpi-trend trend-down" id="kpi-overdue-count">0 Accounts Lagging</span>
+                            </div>
+                        </div>
+
+                        <!-- 7. Total Handover -->
+                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('loans')" title="Click to view Loan Accounts">
+                            <div class="kpi-icon icon-cyan">
+                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Total Handover Cost</h3>
+                                <span class="kpi-val text-cyan" id="kpi-total-handover">₹0.00</span>
+                                <span class="kpi-trend trend-up" id="kpi-total-handover-sub"><i class="fa-solid fa-money-bill-transfer"></i> Net Disbursed</span>
+                            </div>
+                        </div>
+
+                        <!-- 8. Total Profit -->
+                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('reports')" title="Formula: Processing Fee + Total Payable Cost - Handover">
+                            <div class="kpi-icon icon-emerald">
+                                <i class="fa-solid fa-sack-dollar"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Total Profit</h3>
+                                <span class="kpi-val text-emerald" id="kpi-total-profit">₹0.00</span>
+                                <span class="kpi-trend trend-up" id="kpi-total-profit-sub" style="font-size: 10px;" title="Processing Fee + Total Payable - Handover"><i class="fa-solid fa-calculator"></i> Fee + Total - Handover</span>
+                            </div>
+                        </div>
+
+                        <!-- 9. Collection Profit -->
+                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('reports')" title="Procedure: Upfront Processing Fee entered first + (Amount Collected - Handover Cost) added after full payment is made">
+                            <div class="kpi-icon icon-teal">
+                                <i class="fa-solid fa-coins"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Collection Profit</h3>
+                                <span class="kpi-val text-teal" id="kpi-collection-profit">₹0.00</span>
+                                <span class="kpi-trend trend-up" id="kpi-collection-profit-sub" style="font-size: 10px;" title="Upfront Fees + Profit beyond Handover Cost on Completed Loans"><i class="fa-solid fa-receipt"></i> Upfront Fees Collected</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DASHBOARD CHARTS & TABLES -->
+                    <div class="dashboard-details-row">
+                        <!-- Chart container -->
+                        <div class="chart-container glass card-padding flex-item-large">
+                            <div class="card-header-row">
+                                <h3><i class="fa-solid fa-chart-line text-emerald"></i> Collection Trends (Last 7 Days)</h3>
+                            </div>
+                            <div class="chart-canvas-wrapper">
+                                <canvas id="chart-collections"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-details-row margin-top">
+                        <!-- Recent Transactions -->
+                        <div class="table-container glass card-padding flex-item-large">
+                            <div class="card-header-row">
+                                <h3><i class="fa-solid fa-history text-indigo"></i> Recent Collections</h3>
+                                <button class="btn btn-secondary btn-xs" id="btn-dashboard-view-all-collections">View All</button>
+                            </div>
+                            <div class="table-scroll-wrapper" style="max-height: 380px; overflow-y: auto;">
+                                <table class="custom-table" id="dashboard-recent-collections-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">No.</th>
+                                            <th>Date</th>
+                                            <th>Customer Name</th>
+                                            <th>Loan ID</th>
+                                            <th>Amount</th>
+                                            <th>Penalty</th>
+                                            <th>Mode</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Pending & Overdue Payments Overview Widget -->
+                        <div class="table-container glass card-padding flex-item-large">
+                            <div class="card-header-row">
+                                <h3><i class="fa-solid fa-clock text-amber"></i> Pending Payments & Overdues</h3>
+                                <button class="btn btn-secondary btn-xs" id="btn-dashboard-view-all-pending">View in Reports</button>
+                            </div>
+                            <div class="table-scroll-wrapper" style="max-height: 380px; overflow-y: auto;">
+                                <table class="custom-table" id="dashboard-pending-payments-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 40px;">No.</th>
+                                            <th>Due Date</th>
+                                            <th>Borrower Name</th>
+                                            <th>Loan ID</th>
+                                            <th class="text-right">Amount Due</th>
+                                            <th class="text-center">Status</th>
+                                            <th class="text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </section>
+
+                <!-- ==================== CUSTOMERS SECTION ==================== -->
+                <section id="customers" class="app-section">
+                    <div class="toolbar-row glass">
+                        <div class="search-box-wrapper">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="customer-search-input" placeholder="Search by name, ID or mobile number...">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0; width:150px;">
+                            <select id="select-customer-status-filter" style="width:100%;">
+                                <option value="all">All Statuses</option>
+                                <option value="active">Active</option>
+                                <option value="blocked">Blocked</option>
+                                <option value="closed">Closed</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-gradient" id="btn-add-customer">
+                            <i class="fa-solid fa-user-plus"></i> Add New Customer
+                        </button>
+                    </div>
+
+                    <div class="table-container glass margin-top">
+                        <div class="table-scroll-wrapper">
+                            <table class="custom-table" id="customers-main-table">
+                                <thead>
+                                    <tr>
+                                        <th>Client ID</th>
+                                        <th>Full Name</th>
+                                        <th>Mobile</th>
+                                        <th>Location</th>
+                                        <th>Nominee Name</th>
+                                        <th>Status</th>
+                                        <th class="text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic dynamic customers -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== LOANS SECTION ==================== -->
+                <section id="loans" class="app-section">
+                    <div class="toolbar-row glass">
+                        <div class="search-box-wrapper">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="loan-search-input" placeholder="Search loans by ID, borrower name, category...">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0; width:150px;">
+                            <select id="select-loan-status-filter" style="width:100%;">
+                                <option value="all">All Statuses</option>
+                                <option value="active">Active</option>
+                                <option value="overdue">Overdue</option>
+                                <option value="closed">Closed</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-gradient" id="btn-add-loan">
+                            <i class="fa-solid fa-file-contract"></i> Create Loan Account
+                        </button>
+                    </div>
+
+                    <div class="table-container glass margin-top">
+                        <div class="table-scroll-wrapper">
+                            <table class="custom-table" id="loans-main-table">
+                                <thead>
+                                    <tr>
+                                        <th>Loan ID</th>
+                                        <th>Borrower</th>
+                                        <th>Category</th>
+                                        <th class="text-right">Loan Amount</th>
+                                        <th class="text-center">Collection Type</th>
+                                        <th class="text-right">Collection Amount</th>
+                                        <th class="text-center">Status</th>
+                                        <th class="text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic dynamic loans -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== COLLECTIONS SECTION ==================== -->
+                <section id="collections" class="app-section">
+                    <div class="collections-grid">
+                        
+                        <!-- Left Panel: Transaction Form -->
+                        <div class="transaction-panel glass card-padding">
+                            <h3><i class="fa-solid fa-plus-circle text-gradient"></i> Record New Transaction</h3>
+                            <form id="collection-form" class="margin-top">
+                                <!-- Loan search input -->
+                                <div class="form-group autocomplete">
+                                    <label for="collection-loan-search"><i class="fa-solid fa-search"></i> Search Active Loan / Customer</label>
+                                    <input type="text" id="collection-loan-search" placeholder="Type Loan ID, Customer ID, or Name..." autocomplete="off">
+                                    <div class="autocomplete-items" id="collection-autocomplete-results"></div>
+                                    <input type="hidden" id="selected-loan-id-val">
+                                </div>
+
+                                <!-- Selected Account Summary (Hidden until selected) -->
+                                <div class="selected-loan-summary card-padding margin-top-sm hidden" id="collection-loan-summary-box">
+                                    <div class="summary-header">
+                                        <div class="borrower-summary-photo">
+                                            <img id="sum-borrower-photo" src="" alt="Client Photo">
+                                        </div>
+                                        <div class="summary-details">
+                                            <h4 id="sum-borrower-name">Client Name</h4>
+                                            <p id="sum-borrower-id">CID: CUST-000</p>
+                                        </div>
+                                    </div>
+                                    <div class="summary-grid-stats">
+                                        <div class="grid-stat">
+                                            <span>Loan ID</span>
+                                            <strong id="sum-loan-id" class="text-gradient">LOAN-000</strong>
+                                        </div>
+                                        <div class="grid-stat">
+                                            <span>Loan Amount</span>
+                                            <strong id="sum-principal">₹0.00</strong>
+                                        </div>
+                                        <div class="grid-stat">
+                                            <span>Collection Due</span>
+                                            <strong id="sum-installment-due">₹0.00</strong>
+                                        </div>
+                                        <div class="grid-stat">
+                                            <span>Total Balance</span>
+                                            <strong id="sum-total-balance" class="text-amber">₹0.00</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Transaction details -->
+                                <div class="form-row margin-top">
+                                    <div class="form-group flex-1">
+                                        <label for="collect-amount"><i class="fa-solid fa-indian-rupee-sign"></i> Amount Collected</label>
+                                        <input type="number" step="0.01" id="collect-amount" placeholder="₹ Enter amount" required min="1">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="collect-penalty"><i class="fa-solid fa-triangle-exclamation"></i> Penalty Paid (Optional)</label>
+                                        <input type="number" step="0.01" id="collect-penalty" placeholder="₹ Enter penalty" min="0" value="0">
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
+                                        <label for="collect-mode"><i class="fa-solid fa-credit-card"></i> Payment Mode</label>
+                                        <select id="collect-mode" required>
+                                            <option value="Cash">Cash</option>
+                                            <option value="UPI" selected>UPI / GooglePay / PhonePe</option>
+                                            <option value="Card">Credit/Debit Card</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="collect-date"><i class="fa-solid fa-calendar-day"></i> Transaction Date</label>
+                                        <input type="date" id="collect-date" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="collect-notes"><i class="fa-solid fa-note-sticky"></i> Remarks / Notes</label>
+                                    <input type="text" id="collect-notes" placeholder="Optional notes about this transaction">
+                                </div>
+
+                                <div class="error-message" id="collection-error-msg"></div>
+                                <button type="submit" class="btn btn-primary btn-block margin-top" id="btn-submit-collection" disabled>
+                                    <i class="fa-solid fa-check-circle"></i> Record Collection Entry
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Right Panel: Today's Collection History -->
+                        <div class="history-panel glass card-padding">
+                            <div class="card-header-row">
+                                <h3><i class="fa-solid fa-clock-rotate-left text-teal"></i> Today's Transactions</h3>
+                                <span class="badge badge-indigo" id="collect-today-total">Total: ₹0.00</span>
+                            </div>
+                            <div class="table-scroll-wrapper margin-top">
+                                <table class="custom-table" id="collections-today-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">No.</th>
+                                            <th>Loan ID</th>
+                                            <th>Client Name</th>
+                                            <th class="text-right">Paid</th>
+                                            <th>Mode</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dynamic entries -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- ==================== REPORTS SECTION ==================== -->
+                <section id="reports" class="app-section">
+                    <!-- Filters Toolbar -->
+                    <!-- Filters Toolbar -->
+                    <div class="toolbar-row glass flex-wrap" style="gap: 15px; padding: 15px; align-items: flex-end;">
+                        <div class="date-filter-group" style="display: flex; gap: 12px; flex-wrap: wrap; flex: 1;">
+                            <div class="date-input">
+                                <label for="report-start-date">From:</label>
+                                <input type="date" id="report-start-date">
+                            </div>
+                            <div class="date-input">
+                                <label for="report-end-date">To:</label>
+                                <input type="date" id="report-end-date">
+                            </div>
+                            <div class="date-input" style="min-width: 180px;">
+                                <label for="report-search-query">Search Client / Loan:</label>
+                                <input type="text" id="report-search-query" placeholder="Name, ID, Loan ID..." style="width: 100%; border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; background: rgba(0,0,0,0.2); color: #fff; font-size: 13px;">
+                            </div>
+                            <div class="date-input">
+                                <label for="report-filter-mode">Payment Mode:</label>
+                                <select id="report-filter-mode" style="border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; background: rgba(0,0,0,0.2); color: #fff; font-size: 13px; min-width: 110px;">
+                                    <option value="All">All Modes</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="UPI">UPI / GPay</option>
+                                    <option value="Card">Card</option>
+                                    <option value="NetBanking">Net Banking</option>
+                                </select>
+                            </div>
+                            <div class="date-input">
+                                <label for="report-filter-status">Payment Status:</label>
+                                <select id="report-filter-status" style="border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; background: rgba(0,0,0,0.2); color: #fff; font-size: 13px; min-width: 125px;">
+                                    <option value="All">All Statuses</option>
+                                    <option value="Paid">Paid (Collections)</option>
+                                    <option value="Pending">Pending (Schedules)</option>
+                                    <option value="Overdue">Overdue (Past Dues)</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-secondary" id="btn-apply-report-filter" style="height: 33px; margin-top: 19px;">
+                                <i class="fa-solid fa-filter"></i> Apply
+                            </button>
+                        </div>
+                        <div class="export-actions" style="margin-top: 10px;">
+                            <button class="btn btn-gradient btn-sm" id="btn-report-export-pdf">
+                                <i class="fa-solid fa-file-pdf"></i> Export PDF
+                            </button>
+                            <button class="btn btn-secondary btn-sm" id="btn-report-print">
+                                <i class="fa-solid fa-print"></i> Print Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats breakdown bar -->
+                    <div class="mode-breakdown-bar card-padding-x" id="report-mode-breakdown" style="display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); margin-top: 12px; margin-bottom: 5px; flex-wrap: wrap; background: rgba(255,255,255,0.02); padding: 8px 15px; border-radius: 6px; border: 1px dashed var(--border-color); align-items: center;">
+                        <!-- Populate dynamically -->
+                    </div>
+
+                    <!-- Summary KPI Box for filtered reports -->
+                    <div class="report-summary-boxes margin-top">
+                        <div class="report-summary-box glass">
+                            <h4>Collections Selected</h4>
+                            <span class="report-sum-val text-emerald" id="report-summary-collections">₹0.00</span>
+                            <span class="report-sum-desc" id="report-summary-collections-count">0 Transactions</span>
+                        </div>
+                        <div class="report-summary-box glass">
+                            <h4>Penalties Collected</h4>
+                            <span class="report-sum-val text-amber" id="report-summary-penalties">₹0.00</span>
+                            <span class="report-sum-desc">Late fees collected</span>
+                        </div>
+                        <div class="report-summary-box glass">
+                            <h4>Loans Disbursed</h4>
+                            <span class="report-sum-val text-cyan" id="report-summary-loans">₹0.00</span>
+                            <span class="report-sum-desc" id="report-summary-loans-count">0 Accounts opened</span>
+                        </div>
+                    </div>
+
+                    <!-- 1. Daily Collections Register Table -->
+                    <div class="table-container glass margin-top">
+                        <div class="card-header-row card-padding-x" style="padding-top: 15px;">
+                            <h3><i class="fa-solid fa-receipt text-gradient"></i> Daily Collections Register</h3>
+                        </div>
+                        <div class="table-scroll-wrapper">
+                            <table class="custom-table" id="reports-main-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;">No.</th>
+                                        <th>Date</th>
+                                        <th>Customer ID</th>
+                                        <th>Borrower Name</th>
+                                        <th>Loan ID</th>
+                                        <th class="text-right">Collected</th>
+                                        <th class="text-right">Penalty</th>
+                                        <th>Mode</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 2. Operations Register (Loans Disbursed) Table -->
+                    <div class="table-container glass margin-top">
+                        <div class="card-header-row card-padding-x" style="padding-top: 15px;">
+                            <h3><i class="fa-solid fa-hand-holding-dollar text-gradient"></i> Operations Register (Loans Disbursed & Accounts Opened)</h3>
+                        </div>
+                        <div class="table-scroll-wrapper">
+                            <table class="custom-table" id="reports-operations-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;">No.</th>
+                                        <th>Disbursed Date</th>
+                                        <th>Customer ID</th>
+                                        <th>Borrower Name</th>
+                                        <th>Loan ID</th>
+                                        <th>Category</th>
+                                        <th class="text-right">Loan Amount</th>
+                                        <th class="text-right">Handover Cost</th>
+                                        <th class="text-right">Collection Amount</th>
+                                        <th class="text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Unpaid Collections Registry Report Table -->
+                    <div class="table-container glass margin-top">
+                        <div class="card-header-row card-padding-x" style="padding-top: 15px;">
+                            <h3>Unpaid Collections Register (Pending & Overdue)</h3>
+                        </div>
+                        <div class="table-scroll-wrapper">
+                            <table class="custom-table" id="reports-unpaid-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;">No.</th>
+                                        <th>Due Date</th>
+                                        <th>Customer ID</th>
+                                        <th>Borrower Name</th>
+                                        <th>Loan ID</th>
+                                        <th>Collection Type</th>
+                                        <th class="text-right">Collection Amount Due</th>
+                                        <th class="text-center">Status</th>
+                                        <th class="text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== SETTINGS SECTION ==================== -->
+                <section id="settings" class="app-section">
+                    <div class="settings-grid">
+                        
+                        <!-- System Configurations -->
+                        <div class="settings-card glass card-padding">
+                            <h3><i class="fa-solid fa-sliders text-cyan"></i> System Configurations</h3>
+                            <form id="settings-system-form" class="margin-top">
+                                <div class="form-row">
+                                    <div class="form-group flex-2">
+                                        <label for="set-company-name">Company Name</label>
+                                        <input type="text" id="set-company-name" value="Kishore Finance" required>
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="set-company-mobile">Company Mobile</label>
+                                        <input type="tel" id="set-company-mobile" value="9988776655" required pattern="^[0-9]{10}$">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
+                                        <label for="set-currency">Currency Symbol</label>
+                                        <input type="text" id="set-currency" value="₹" required>
+                                    </div>
+                                    <div class="form-group flex-2">
+                                        <label for="set-company-address">Company Address</label>
+                                        <input type="text" id="set-company-address" placeholder="Enter company address" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save Configuration</button>
+                            </form>
+                        </div>
+
+                        <!-- User Access Credentials -->
+                        <div class="settings-card glass card-padding">
+                            <h3><i class="fa-solid fa-lock text-indigo"></i> Admin Access Management</h3>
+                            <form id="settings-security-form" class="margin-top">
+                                <div class="form-group">
+                                    <label for="set-username">Administrator Username</label>
+                                    <input type="text" id="set-username" value="admin" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="set-old-pass">Current Password</label>
+                                    <input type="password" id="set-old-pass" placeholder="Enter current password" required>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
+                                        <label for="set-new-pass">New Password</label>
+                                        <input type="password" id="set-new-pass" placeholder="New password" minlength="4">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="set-confirm-pass">Confirm New Password</label>
+                                        <input type="password" id="set-confirm-pass" placeholder="Confirm new password">
+                                    </div>
+                                </div>
+                                <div class="error-message" id="settings-pass-error"></div>
+                                <div class="success-message" id="settings-pass-success"></div>
+                                <button type="submit" class="btn btn-primary">Update Security Profile</button>
+                            </form>
+                        </div>
+
+
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== MODAL: ADD CUSTOMER ==================== -->
+    <div id="modal-add-customer" class="modal-overlay">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h3 id="customer-modal-title"><i class="fa-solid fa-user-plus text-gradient"></i> Add New Customer Profile</h3>
+                <button class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-add-customer">
+                <div class="modal-body scrollable-y">
+                    <input type="hidden" id="is-edit-cust-val" value="false">
+                    
+                    <!-- Customer Details Row -->
+                    <div class="form-section-title">Client ID & Personal Details</div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="cust-id">Client ID (Manual Generation) <span class="required">*</span></label>
+                            <div class="input-action-group">
+                                <input type="text" id="cust-id" required placeholder="e.g. CUST-1001">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-generate-cust-id">Auto</button>
+                            </div>
+                        </div>
+                        <div class="form-group flex-2">
+                            <label for="cust-name">Full Name <span class="required">*</span></label>
+                            <input type="text" id="cust-name" required placeholder="Enter borrower's full name">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="cust-mobile">Primary Mobile <span class="required">*</span></label>
+                            <input type="tel" id="cust-mobile" required pattern="^[0-9]{10}$" placeholder="10-digit mobile number">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="cust-alt-mobile">Alternative Mobile</label>
+                            <input type="tel" id="cust-alt-mobile" pattern="^[0-9]{10}$" placeholder="Secondary mobile number">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cust-address">Residential Address <span class="required">*</span></label>
+                        <input type="text" id="cust-address" required placeholder="Flat/House No, Building, Area, Street">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="cust-city">City <span class="required">*</span></label>
+                            <input type="text" id="cust-city" required placeholder="City">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="cust-district">District <span class="required">*</span></label>
+                            <input type="text" id="cust-district" required placeholder="District">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="cust-state">State <span class="required">*</span></label>
+                            <input type="text" id="cust-state" required placeholder="State">
+                        </div>
+                    </div>
+
+                    <!-- Nominee Details -->
+                    <div class="form-section-title margin-top">Nominee Information</div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="cust-guarantor-name">Nominee Full Name <span class="required">*</span></label>
+                            <input type="text" id="cust-guarantor-name" required placeholder="Nominee full name">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="cust-guarantor-mobile">Nominee Mobile Number <span class="required">*</span></label>
+                            <input type="tel" id="cust-guarantor-mobile" required pattern="^[0-9]{10}$" placeholder="10-digit contact number">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="cust-guarantor-address">Nominee Address <span class="required">*</span></label>
+                        <input type="text" id="cust-guarantor-address" required placeholder="Nominee residential address">
+                    </div>
+
+                    <!-- Document Uploads -->
+                    <div class="form-section-title margin-top">Aadhaar Card & Photo Attachments</div>
+                    <div class="form-row media-capture-row">
+                        <!-- Photograph section -->
+                        <div class="form-group media-card flex-1">
+                            <label>Client Photograph <span class="required">*</span></label>
+                            <div class="media-preview-box" id="photo-preview-container">
+                                <i class="fa-solid fa-camera"></i>
+                                <span>No Photo Attached</span>
+                            </div>
+                            <div class="media-btn-row">
+                                <button type="button" class="btn btn-secondary btn-sm flex-1" id="btn-camera-capture">
+                                    <i class="fa-solid fa-video"></i> Capture
+                                </button>
+                                <label class="btn btn-secondary btn-sm flex-1 label-file-upload">
+                                    <i class="fa-solid fa-upload"></i> Upload
+                                    <input type="file" id="cust-photo-upload" accept="image/*" class="file-input-hidden">
+                                </label>
+                            </div>
+                            <input type="hidden" id="cust-photo-base64">
+                        </div>
+
+                        <!-- KYC Proof section -->
+                        <div class="form-group media-card flex-1">
+                            <label>Proof Image <span class="required">*</span></label>
+                            <div class="media-preview-box" id="aadhaar-preview-container">
+                                <i class="fa-solid fa-id-card"></i>
+                                <span>No Proof Image Selected</span>
+                            </div>
+                            <div class="media-btn-row">
+                                <button type="button" class="btn btn-secondary btn-sm flex-1" id="btn-camera-capture-aadhaar">
+                                    <i class="fa-solid fa-video"></i> Capture
+                                </button>
+                                <label class="btn btn-secondary btn-sm flex-1 label-file-upload">
+                                    <i class="fa-solid fa-upload"></i> Upload
+                                    <input type="file" id="cust-aadhaar-upload" accept="image/*" class="file-input-hidden">
+                                </label>
+                            </div>
+                            <input type="hidden" id="cust-aadhaar-base64">
+                        </div>
+
+                        <!-- Nominee Proof section -->
+                        <div class="form-group media-card flex-1">
+                            <label>Nominee Proof <span class="text-muted">(Optional)</span></label>
+                            <div class="media-preview-box" id="guarantor-proof-preview-container">
+                                <i class="fa-solid fa-id-card"></i>
+                                <span>No Nominee Proof Selected</span>
+                            </div>
+                            <div class="media-btn-row">
+                                <button type="button" class="btn btn-secondary btn-sm flex-1" id="btn-camera-capture-guarantor">
+                                    <i class="fa-solid fa-video"></i> Capture
+                                </button>
+                                <label class="btn btn-secondary btn-sm flex-1 label-file-upload">
+                                    <i class="fa-solid fa-upload"></i> Upload
+                                    <input type="file" id="cust-guarantor-proof-upload" accept="image/*" class="file-input-hidden">
+                                </label>
+                            </div>
+                            <input type="hidden" id="cust-guarantor-proof-base64">
+                        </div>
+                    </div>
+
+                    <div class="form-group margin-top">
+                        <label for="cust-initial-status">Initial Status</label>
+                        <select id="cust-initial-status">
+                            <option value="Active" selected>Active</option>
+                            <option value="Blocked">Blocked</option>
+                            <option value="Closed">Closed</option>
+                        </select>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-customer-submit">Save Customer Profile <i class="fa-solid fa-circle-check"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: ADD LOAN ==================== -->
+    <div id="modal-add-loan" class="modal-overlay">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h3 id="loan-modal-title"><i class="fa-solid fa-hand-holding-dollar text-gradient"></i> Open New Loan Account</h3>
+                <button class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-add-loan">
+                <div class="modal-body scrollable-y">
+                    <input type="hidden" id="is-edit-loan-val" value="false">
+
+                    <div class="form-section-title">Loan Identity & Borrower</div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="loan-id">Loan ID (Manual Generation) <span class="required">*</span></label>
+                            <div class="input-action-group">
+                                <input type="text" id="loan-id" required placeholder="e.g. LOAN-1001">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-generate-loan-id">Auto</button>
+                            </div>
+                        </div>
+                        <div class="form-group flex-2 autocomplete">
+                            <label for="loan-borrower-search">Select Borrower <span class="required">*</span></label>
+                            <input type="text" id="loan-borrower-search" required placeholder="Search by Client ID or Name..." autocomplete="off">
+                            <div class="autocomplete-items" id="loan-borrower-results"></div>
+                            <input type="hidden" id="selected-borrower-id-val">
+                        </div>
+                    </div>
+
+                    <div class="form-section-title margin-top">Financial Terms & Calculations</div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="loan-category">Loan Category <span class="required">*</span></label>
+                            <select id="loan-category" required>
+                                <option value="Personal" selected>Personal Loan</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="loan-principal">Loan Amount (₹) <span class="required">*</span></label>
+                            <input type="number" id="loan-principal" required placeholder="e.g. 50000" min="1000">
+                        </div>
+                    </div>
+
+                    <div class="form-row hidden" id="row-auto-finance-fields">
+                        <div class="form-group flex-1">
+                            <label for="loan-bike-number">Bike Number <span class="required">*</span></label>
+                            <input type="text" id="loan-bike-number" placeholder="e.g. TN-99-AB-1234">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="loan-document-fee">Document Fees (₹)</label>
+                            <input type="number" step="0.01" id="loan-document-fee" placeholder="Document fees (defaults to 0)" value="0" min="0">
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="loan-interest-rate" value="0">
+                    <input type="hidden" id="loan-interest-type" value="Flat">
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="loan-processing-fee" id="label-processing-fee">Processing Fees (₹)</label>
+                            <input type="number" step="0.01" id="loan-processing-fee" placeholder="Processing fees (defaults to 0)" value="0" min="0">
+                            <p class="text-muted" style="font-size: 11px; margin-top: 4px;">Disbursed Amount (Received): <strong id="loan-disbursed-amount-preview" class="text-cyan">₹0.00</strong></p>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="loan-installment-amount">Collection Amount (₹) <span class="required">*</span></label>
+                            <div class="input-action-group">
+                                <input type="number" step="0.01" id="loan-installment-amount" required placeholder="Enter manual or auto collection amount">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-recalc-installment" title="Recalculate automatically based on terms">Recalc</button>
+                            </div>
+                            <p class="text-muted" style="font-size: 11px; margin-top: 4px;">Type custom collection amount or click Recalc for formula calculation.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="loan-frequency">Collection Type <span class="required">*</span></label>
+                            <select id="loan-frequency" required>
+                                <option value="Daily">Daily Payments</option>
+                                <option value="Weekly">Weekly Payments</option>
+                                <option value="Monthly" selected>Monthly Payments</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="loan-duration-days" id="loan-duration-label">Loan Duration (Months) <span class="required">*</span></label>
+                            <input type="number" id="loan-duration-days" placeholder="e.g. 12" value="12" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="loan-start-date">Disbursal / Start Date <span class="required">*</span></label>
+                            <input type="date" id="loan-start-date" required>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="loan-end-date">End / Maturity Date <span class="required">*</span></label>
+                            <input type="date" id="loan-end-date" required>
+                        </div>
+                    </div>
+
+                    <div class="form-section-title margin-top">Status Settings</div>
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="loan-status-mode">Status Selection Mode</label>
+                            <select id="loan-status-mode">
+                                <option value="Auto" selected>Automatic System Calculation</option>
+                                <option value="Manual">Manual Override Selection</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="loan-status-val">Manual Status</label>
+                            <select id="loan-status-val" disabled>
+                                <option value="Active" selected>Active</option>
+                                <option value="Overdue">Overdue</option>
+                                <option value="Closed">Closed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Repayment Calculator Preview Card -->
+                    <div class="calculator-preview-card card-padding margin-top-sm" id="loan-calc-preview-card">
+                        <h4 class="text-gradient"><i class="fa-solid fa-calculator"></i> Repayment Estimate Schedule</h4>
+                        <div class="calc-preview-grid">
+                            <div>Loan Amount: <strong id="preview-calc-principal">₹0.00</strong></div>
+                            <div>Processing Fee: <strong id="preview-calc-interest">₹0.00</strong></div>
+                            <div>Handover Cost: <strong id="preview-calc-handover" class="text-cyan">₹0.00</strong></div>
+                            <div>Total Payable: <strong id="preview-calc-payable">₹0.00</strong></div>
+                            <div>No. of Collections: <strong id="preview-calc-count">0</strong></div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-loan-submit">Disburse Loan Account <i class="fa-solid fa-handshake"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: WEBCAM CAPTURE SIMULATION ==================== -->
+    <div id="modal-camera-capture" class="modal-overlay modal-alert-level">
+        <div class="modal-card modal-card-sm glass">
+            <div class="modal-header">
+                <h3 id="camera-modal-title"><i class="fa-solid fa-video text-gradient"></i> Instant Camera Capture</h3>
+                <button class="btn-close-camera-modal" id="btn-close-camera-modal-top"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body text-center">
+                <!-- Front / Back Camera Switcher Buttons -->
+                <div class="camera-switch-row" style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;">
+                    <button type="button" class="btn btn-secondary btn-xs active-camera-mode" id="btn-cam-front" style="border-radius: 20px; padding: 5px 14px;">
+                        <i class="fa-solid fa-user"></i> Front (Selfie)
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-xs" id="btn-cam-back" style="border-radius: 20px; padding: 5px 14px;">
+                        <i class="fa-solid fa-camera-rotate"></i> Back (Document)
+                    </button>
+                </div>
+
+                <div class="webcam-viewport">
+                    <!-- Live feed wrapper -->
+                    <video id="webcam-live-feed" autoplay playsinline muted style="display: none; width: 100%; height: 100%; object-fit: cover;"></video>
+                    <!-- Fallback / Simulated camera view -->
+                    <div id="webcam-simulated-screen" class="webcam-sim-screen">
+                        <div class="shutter-overlay">
+                            <i class="fa-solid fa-expand" id="camera-modal-icon"></i>
+                            <span id="camera-modal-guide-text">Position subject in center</span>
+                        </div>
+                        <canvas id="webcam-photo-canvas" style="display: none;"></canvas>
+                    </div>
+                </div>
+                <p class="margin-top-sm text-muted" id="camera-modal-sub-desc" style="font-size: 11px;">Supports live Front (Selfie) and Back (Document) camera stream.</p>
+            </div>
+            <div class="modal-footer flex-center-content" style="gap: 10px;">
+                <button type="button" class="btn btn-secondary" id="btn-close-camera-modal-bottom">Close</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-flip-camera" title="Switch between front and back camera">
+                    <i class="fa-solid fa-rotate"></i> Flip
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-camera-shutter">
+                    <i class="fa-solid fa-circle"></i> Capture Snap
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: CUSTOMER INSPECTION & LEDGER ==================== -->
+    <div id="modal-inspect-customer" class="modal-overlay">
+        <div class="modal-card modal-card-large glass">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-id-card text-gradient"></i> Customer Profile Inspection</h3>
+                <button class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body scrollable-y">
+                
+                <!-- Client Metadata summary header -->
+                <div class="inspection-summary-header glass card-padding">
+                    <div class="inspect-main-avatar">
+                        <img id="inspect-avatar-img" src="" alt="Client Face">
+                    </div>
+                    <div class="inspect-main-info">
+                        <div class="inspect-title-row">
+                            <h2 id="inspect-full-name">Full Name Here</h2>
+                            <span class="badge" id="inspect-status-badge">Active</span>
+                        </div>
+                        <p class="inspect-meta-cid">Client Identity Code: <strong id="inspect-cid" class="text-cyan">CUST-0000</strong></p>
+                        
+                        <div class="inspect-quick-contacts" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <a id="inspect-phone-1-link" href="tel:+919999999999" class="phone-call-badge" title="Click to Call Client Directly">
+                                    <i class="fa-solid fa-phone text-emerald"></i>
+                                    <span id="inspect-phone-1">9999999999</span>
+                                    <span class="call-btn-chip"><i class="fa-solid fa-phone-volume"></i> Call</span>
+                                </a>
+                            </div>
+                            <span id="inspect-phone-2-wrapper">
+                                <a id="inspect-phone-2-link" href="#" class="phone-call-badge phone-call-alt" title="Click to Call Alternative Mobile">
+                                    <i class="fa-solid fa-phone text-cyan"></i> Alt: <span id="inspect-phone-2">8888888888</span>
+                                    <span class="call-btn-chip"><i class="fa-solid fa-phone-volume"></i> Call</span>
+                                </a>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="inspect-quick-actions">
+                        <button class="btn btn-secondary btn-sm btn-block" id="btn-download-profile-pdf">
+                            <i class="fa-solid fa-file-pdf text-rose"></i> Download Profile PDF
+                        </button>
+                        <button class="btn btn-secondary btn-sm btn-block" id="btn-download-ledger-pdf">
+                            <i class="fa-solid fa-table-list text-indigo"></i> Download Full Ledger
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Split panels -->
+                <div class="inspection-tabs-wrapper margin-top">
+                    <div class="tabs-nav">
+                        <button class="tab-btn active" data-tab="inspect-info">Personal & Nominee Data</button>
+                        <button class="tab-btn" data-tab="inspect-loans">Active & Past Loan Accounts</button>
+                        <button class="tab-btn" data-tab="inspect-ledgers">Transaction Ledgers</button>
+                    </div>
+
+                    <!-- Tab Content: Personal & Nominee details -->
+                    <div class="tab-content active" id="inspect-info">
+                        <div class="info-split-row">
+                            <div class="info-card-panel flex-1">
+                                <h4><i class="fa-solid fa-address-book text-cyan"></i> KYC Residential Address</h4>
+                                <div class="address-display margin-top-sm">
+                                    <p id="inspect-address-str">Flat A, 1st Street, City Name, District, State</p>
+                                </div>
+                                <div class="aadhaar-thumbnail-box margin-top">
+                                    <h5>Attached Proof Image</h5>
+                                    <div class="aadhaar-img-wrapper" id="inspect-aadhaar-img-container">
+                                        <img id="inspect-aadhaar-img" src="" alt="KYC proof document">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="info-card-panel flex-1">
+                                <h4><i class="fa-solid fa-user-shield text-indigo"></i> Nominee Security Details</h4>
+                                <div class="guarantor-display margin-top-sm">
+                                    <div class="data-row">
+                                        <span class="d-label">Full Name:</span>
+                                        <span class="d-value" id="inspect-g-name">John Doe</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="d-label">Mobile Number:</span>
+                                        <a id="inspect-g-phone-link" href="#" class="phone-call-badge phone-call-alt" title="Click to Call Nominee Directly">
+                                            <i class="fa-solid fa-phone text-indigo"></i> <span class="d-value text-gradient" id="inspect-g-phone">9999999999</span>
+                                            <span class="call-btn-chip"><i class="fa-solid fa-phone-volume"></i> Call</span>
+                                        </a>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="d-label">Address:</span>
+                                        <span class="d-value" id="inspect-g-address">123 Street</span>
+                                    </div>
+                                </div>
+
+                                <div class="aadhaar-thumbnail-box margin-top" id="inspect-g-proof-box">
+                                    <h5>Attached Nominee Proof</h5>
+                                    <div class="aadhaar-img-wrapper" id="inspect-g-proof-img-container">
+                                        <img id="inspect-g-proof-img" src="" alt="Nominee proof document">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Administrative Override at the bottom of the panel -->
+                        <div class="info-card-panel glass card-padding margin-top" style="background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border-color); border-radius: 8px;">
+                            <h4 style="font-size: 15px; font-weight: 600;"><i class="fa-solid fa-shield-halved text-amber"></i> Administrative Override</h4>
+                            <p class="text-muted" style="font-size: 11px; margin-top: 4px; margin-bottom: 12px;">Manually update the status code for this customer profile file.</p>
+                            <div class="admin-override-form" style="display: flex; gap: 15px; align-items: flex-end;">
+                                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                    <label for="inspect-status-override" style="font-size: 12px; font-weight: 500;">Customer Status Code</label>
+                                    <select id="inspect-status-override" style="width: 100%; margin-top: 5px;">
+                                        <option value="Active">Active</option>
+                                        <option value="Blocked">Blocked</option>
+                                        <option value="Closed">Closed</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary" id="btn-save-status-override" style="height: 38px;">Update Status Code</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Content: Active & Past Loans -->
+                    <div class="tab-content" id="inspect-loans">
+                        <div class="table-container no-border">
+                            <div class="table-scroll-wrapper">
+                                <table class="custom-table" id="inspect-loans-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Loan ID</th>
+                                            <th>Category</th>
+                                            <th>Loan Amount</th>
+                                            <th>Collection Type</th>
+                                            <th>Collection Amount</th>
+                                            <th>Total Paid</th>
+                                            <th>Outstanding</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Content: Transaction Ledgers -->
+                    <div class="tab-content" id="inspect-ledgers">
+                        <div class="table-container no-border">
+                            <div class="table-scroll-wrapper">
+                                <table class="custom-table" id="inspect-ledger-transactions-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">No.</th>
+                                            <th>Date</th>
+                                            <th>Loan ID</th>
+                                            <th>Amount</th>
+                                            <th>Penalty</th>
+                                            <th>Mode</th>
+                                            <th>Remarks</th>
+                                            <th class="text-right" style="width: 100px;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: VIEW REPAYMENT SCHEDULE -->
+    <div id="modal-view-schedule" class="modal-overlay">
+        <div class="modal-card glass" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-calendar-days text-gradient"></i> Repayment Schedule & Due Dates</h3>
+                <button class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body scrollable-y" style="max-height: 450px; padding: 20px;">
+                <div class="loan-schedule-info-banner" style="margin-bottom: 15px; font-size: 13px;">
+                    <p>Loan ID: <strong id="sched-modal-loan-id" class="text-gradient">LOAN-0000</strong> | Borrower: <strong id="sched-modal-borrower-name">Client Name</strong></p>
+                </div>
+                <div class="table-container no-border">
+                    <table class="custom-table" id="view-schedule-table" style="font-size: 13px;">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Due Date</th>
+                                <th>Amount Due</th>
+                                <th>Amount Paid</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic schedule rows go here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== EDIT TRANSACTION MODAL ==================== -->
+    <div id="modal-edit-transaction" class="modal-overlay modal-alert-level">
+        <div class="modal-card glass" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pen-to-square text-gradient"></i> Edit Collection Transaction</h3>
+                <button class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-edit-transaction">
+                <div class="modal-body scrollable-y" style="padding: 20px;">
+                    <input type="hidden" id="edit-tx-id">
+                    <input type="hidden" id="edit-tx-loan-id">
+
+                    <div class="form-group">
+                        <label for="edit-tx-amount"><i class="fa-solid fa-indian-rupee-sign"></i> Amount Collected <span class="required">*</span></label>
+                        <input type="number" step="any" id="edit-tx-amount" required placeholder="Enter amount">
+                    </div>
+
+                    <div class="form-group margin-top-sm">
+                        <label for="edit-tx-penalty"><i class="fa-solid fa-circle-exclamation"></i> Penalty Paid</label>
+                        <input type="number" step="any" id="edit-tx-penalty" placeholder="0">
+                    </div>
+
+                    <div class="form-group margin-top-sm">
+                        <label for="edit-tx-mode"><i class="fa-solid fa-credit-card"></i> Payment Mode</label>
+                        <select id="edit-tx-mode">
+                            <option value="Cash">Cash</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Card">Card</option>
+                            <option value="NetBanking">Net Banking</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group margin-top-sm">
+                        <label for="edit-tx-date"><i class="fa-solid fa-calendar-day"></i> Transaction Date <span class="required">*</span></label>
+                        <input type="date" id="edit-tx-date" required>
+                    </div>
+
+                    <div class="form-group margin-top-sm">
+                        <label for="edit-tx-notes"><i class="fa-solid fa-note-sticky"></i> Remarks / Notes</label>
+                        <input type="text" id="edit-tx-notes" placeholder="Optional notes">
+                    </div>
+                    
+                    <div class="error-message margin-top-sm" id="edit-tx-error-msg" style="color: var(--clr-rose); font-size: 13px;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-edit-tx-submit">Save Changes <i class="fa-solid fa-circle-check"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/data.js?v=62"></script>
+    <script src="js/pdf.js?v=62"></script>
+    <script src="js/app.js?v=62"></script>
+</body>
+</html>
