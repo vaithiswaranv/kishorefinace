@@ -633,6 +633,7 @@
                                         <th class="text-right">Penalty</th>
                                         <th>Mode</th>
                                         <th>Remarks</th>
+                                        <th class="text-right" style="width: 90px;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -756,6 +757,77 @@
                                 <div class="success-message" id="settings-pass-success"></div>
                                 <button type="submit" class="btn btn-primary">Update Security Profile</button>
                             </form>
+                        </div>
+
+                        <!-- Data Management & Fresh Start Controls -->
+                        <div class="settings-card glass card-padding" style="grid-column: 1 / -1; margin-top: 10px;">
+                            <h3><i class="fa-solid fa-database text-rose"></i> Data Management & Fresh Slate Controls</h3>
+                            <p class="text-muted" style="font-size: 12px; margin-top: 5px; margin-bottom: 18px;">
+                                Manage, clear, or backup your system records. Use these options to start fresh with new customer accounts, loan files, and collection reports.
+                            </p>
+                            <div class="data-mgmt-actions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                                <!-- 1. Reset All Data -->
+                                <div class="data-action-card glass" style="padding: 16px; border-radius: 10px; border: 1px solid rgba(244, 63, 94, 0.3); background: rgba(244, 63, 94, 0.05);">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <i class="fa-solid fa-trash-can text-rose" style="font-size: 20px;"></i>
+                                        <h4 style="margin: 0; font-size: 14px; color: #fff;">Reset All Business Data</h4>
+                                    </div>
+                                    <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; min-height: 32px;">
+                                        Permanently wipes all customer profiles, loan files, and collection reports for a fresh start. Admin credentials are kept.
+                                    </p>
+                                    <button type="button" class="btn btn-danger btn-sm" id="btn-reset-all-data" style="width: 100%;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Reset Everything (Fresh Start)
+                                    </button>
+                                </div>
+
+                                <!-- 2. Clear Collections & Reports -->
+                                <div class="data-action-card glass" style="padding: 16px; border-radius: 10px; border: 1px solid rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.05);">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <i class="fa-solid fa-receipt text-amber" style="font-size: 20px;"></i>
+                                        <h4 style="margin: 0; font-size: 14px; color: #fff;">Clear Reports & Collections</h4>
+                                    </div>
+                                    <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; min-height: 32px;">
+                                        Wipes all transaction receipts and daily collection reports. Keeps customer accounts and active loans intact.
+                                    </p>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-clear-all-collections" style="width: 100%; border-color: rgba(245, 158, 11, 0.5); color: var(--clr-amber);">
+                                        <i class="fa-solid fa-eraser"></i> Clear Collections & Reports
+                                    </button>
+                                </div>
+
+                                <!-- 3. Delete All Loans -->
+                                <div class="data-action-card glass" style="padding: 16px; border-radius: 10px; border: 1px solid rgba(99, 102, 241, 0.3); background: rgba(99, 102, 241, 0.05);">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <i class="fa-solid fa-hand-holding-dollar text-indigo" style="font-size: 20px;"></i>
+                                        <h4 style="margin: 0; font-size: 14px; color: #fff;">Delete All Loan Accounts</h4>
+                                    </div>
+                                    <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; min-height: 32px;">
+                                        Deletes all loan account registers and collection history, while retaining client KYC profiles.
+                                    </p>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-clear-all-loans" style="width: 100%;">
+                                        <i class="fa-solid fa-folder-minus"></i> Delete All Loans
+                                    </button>
+                                </div>
+
+                                <!-- 4. Backup & Restore -->
+                                <div class="data-action-card glass" style="padding: 16px; border-radius: 10px; border: 1px solid rgba(6, 182, 212, 0.3); background: rgba(6, 182, 212, 0.05);">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <i class="fa-solid fa-floppy-disk text-cyan" style="font-size: 20px;"></i>
+                                        <h4 style="margin: 0; font-size: 14px; color: #fff;">Backup & Restore (JSON)</h4>
+                                    </div>
+                                    <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; min-height: 32px;">
+                                        Export an instant offline database JSON backup or restore from a previously saved JSON file.
+                                    </p>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button type="button" class="btn btn-secondary btn-sm flex-1" id="btn-export-backup" style="color: var(--clr-cyan);">
+                                            <i class="fa-solid fa-download"></i> Backup
+                                        </button>
+                                        <label class="btn btn-secondary btn-sm flex-1 label-file-upload" style="text-align: center; margin-bottom: 0;">
+                                            <i class="fa-solid fa-upload"></i> Restore
+                                            <input type="file" id="input-restore-backup-file" accept=".json" class="file-input-hidden">
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
 
@@ -1357,8 +1429,9 @@
         </div>
     </div>
 
-    <script src="js/data.js?v=62"></script>
-    <script src="js/pdf.js?v=62"></script>
-    <script src="js/app.js?v=62"></script>
+    <script src="js/data.js?v=63"></script>
+    <script src="js/sms.js?v=63"></script>
+    <script src="js/pdf.js?v=63"></script>
+    <script src="js/app.js?v=63"></script>
 </body>
 </html>

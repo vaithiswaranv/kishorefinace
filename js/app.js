@@ -2302,6 +2302,7 @@ function renderReports() {
                         (mode === "NetBanking" && (c.paymentMode === "NetBanking" || c.paymentMode === "Net Banking"))) {
                         
                         reportRows.push({
+                            txId: c.txId,
                             date: c.transactionDate,
                             customerId: c.customerId,
                             borrowerName: name,
@@ -2321,6 +2322,7 @@ function renderReports() {
         const pendingItems = getAllPendingPayments(startStr, endStr, query, status);
         pendingItems.forEach(item => {
             reportRows.push({
+                txId: null,
                 date: item.dueDate,
                 customerId: item.customerId,
                 borrowerName: item.borrowerName,
@@ -2341,6 +2343,7 @@ function renderReports() {
                     const name = borrower ? borrower.name : "Unknown";
                     if (matchSearch(l.customerId, l.id, name)) {
                         reportRows.push({
+                            txId: null,
                             date: l.endDate,
                             customerId: l.customerId,
                             borrowerName: name,
@@ -2393,7 +2396,7 @@ function renderReports() {
 
     // 5. Render report rows
     if (reportRows.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">No matching reports registry history.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="10" class="text-center text-muted">No matching reports registry history.</td></tr>`;
     } else {
         reportRows.forEach((r, idx) => {
             const row = document.createElement("tr");
@@ -2406,6 +2409,16 @@ function renderReports() {
             
             const amountColorClass = (r.mode === "Pending" || r.mode === "Overdue") ? "text-amber" : "text-emerald";
 
+            let actionHtml = `<span class="text-muted">-</span>`;
+            if (r.txId) {
+                actionHtml = `
+                    <div style="display:flex; gap:6px; justify-content:flex-end;">
+                        <button class="btn-action-icon btn-edit" onclick="openEditTransactionModal('${r.txId}', '${r.loanId}')" title="Edit Transaction" style="color:var(--clr-amber); background:var(--clr-amber-glow); width:28px; height:28px; font-size:11px;"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn-action-icon btn-delete" onclick="deleteReportTransaction('${r.txId}', '${r.customerId}', '${r.loanId}')" title="Delete Transaction Receipt" style="color:var(--clr-rose); background:var(--clr-rose-glow); width:28px; height:28px; font-size:11px;"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                `;
+            }
+
             row.innerHTML = `
                 <td><strong>${idx + 1}</strong></td>
                 <td>${formatDateToDMY(r.date)}</td>
@@ -2416,6 +2429,7 @@ function renderReports() {
                 <td class="text-amber">₹${r.penalty.toLocaleString()}</td>
                 <td><span class="${badgeClass}">${r.mode}</span></td>
                 <td><small class="text-muted">${r.remarks}</small></td>
+                <td class="text-right">${actionHtml}</td>
             `;
             tableBody.appendChild(row);
         });
@@ -2674,6 +2688,95 @@ function initSettings() {
 
             successDiv.textContent = "4-Digit login MPIN updated successfully.";
             mpinForm.reset();
+        });
+    }
+
+    // Data Management: Reset All Business Data (Fresh Start)
+    const resetAllBtn = document.getElementById("btn-reset-all-data");
+    if (resetAllBtn) {
+        resetAllBtn.addEventListener("click", () => {
+            if (confirm("⚠️ DANGER ZONE: Are you sure you want to PERMANENTLY RESET ALL BUSINESS DATA?\n\nThis will permanently delete:\n• All Customer Profiles & KYC Documents\n• All Loan Accounts & Repayment Schedules\n• All Collection Receipts & Reports History\n\nYour Admin Login and System Settings will be preserved.\n\nClick OK to confirm and start fresh.")) {
+                resetAllBusinessData();
+                alert("All business data (customers, loans, collections, reports) has been reset. You now have a fresh clean slate.");
+                renderDashboard();
+                renderCustomersList();
+                renderLoansList();
+                renderReports();
+                renderCollectionsToday();
+            }
+        });
+    }
+
+    // Data Management: Clear Collections & Reports
+    const clearCollsBtn = document.getElementById("btn-clear-all-collections");
+    if (clearCollsBtn) {
+        clearCollsBtn.addEventListener("click", () => {
+            if (confirm("Are you sure you want to clear all Collections & Reports history?\n\nThis will remove all transaction receipts and reset loan repayment progress, while keeping your Customer Accounts and Loan Files intact.")) {
+                clearAllCollections();
+                alert("Collections and reports history have been cleared.");
+                renderDashboard();
+                renderLoansList();
+                renderReports();
+                renderCollectionsToday();
+            }
+        });
+    }
+
+    // Data Management: Delete All Loans
+    const clearLoansBtn = document.getElementById("btn-clear-all-loans");
+    if (clearLoansBtn) {
+        clearLoansBtn.addEventListener("click", () => {
+            if (confirm("Are you sure you want to delete ALL Loan Accounts and collection receipts?\n\nCustomer KYC profiles will be preserved.")) {
+                clearAllLoans();
+                alert("All loan accounts and associated transaction records have been deleted.");
+                renderDashboard();
+                renderLoansList();
+                renderReports();
+                renderCollectionsToday();
+            }
+        });
+    }
+
+    // Data Management: Export Database Backup (JSON)
+    const exportBackupBtn = document.getElementById("btn-export-backup");
+    if (exportBackupBtn) {
+        exportBackupBtn.addEventListener("click", () => {
+            const jsonStr = exportDatabaseBackup();
+            const blob = new Blob([jsonStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            const dateStr = new Date().toISOString().split('T')[0];
+            a.href = url;
+            a.download = `kishore_finance_backup_${dateStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    // Data Management: Restore Database Backup (JSON)
+    const restoreInput = document.getElementById("input-restore-backup-file");
+    if (restoreInput) {
+        restoreInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    importDatabaseBackup(evt.target.result);
+                    alert("Database restored successfully from backup.");
+                    renderDashboard();
+                    renderCustomersList();
+                    renderLoansList();
+                    renderReports();
+                    renderCollectionsToday();
+                } catch (err) {
+                    alert("Restore failed: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+            restoreInput.value = "";
         });
     }
 }
@@ -3023,13 +3126,30 @@ window.triggerDeleteTransaction = function(txId, customerId, loanId, txDate) {
         if (deleteCollection(realTxId)) {
             alert("Transaction deleted successfully.");
             // Re-render inspection window
-            inspectCustomerProfile(customerId, 'inspect-ledgers');
+            if (customerId) {
+                inspectCustomerProfile(customerId, 'inspect-ledgers');
+            }
             // Re-render lists
+            renderCollectionsToday();
+            renderLoansList();
+            renderReports();
+            renderDashboard();
+        } else {
+            alert("Error: Transaction not found.");
+        }
+    }
+};
+
+window.deleteReportTransaction = function(txId, customerId, loanId) {
+    if (confirm(`Are you sure you want to permanently delete Collection Transaction [${txId}]?\n\nThis will remove the transaction from records and recalculate loan account balances.`)) {
+        if (deleteCollection(txId)) {
+            alert("Transaction deleted successfully.");
+            renderReports();
             renderCollectionsToday();
             renderLoansList();
             renderDashboard();
         } else {
-            alert("Error: Transaction not found.");
+            alert("Error: Transaction record not found.");
         }
     }
 };
@@ -3079,6 +3199,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                     renderCollectionsToday();
                     renderLoansList();
+                    renderReports();
                     renderDashboard();
                 } else {
                     if (errorMsgEl) errorMsgEl.textContent = "Transaction not found.";

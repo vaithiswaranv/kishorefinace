@@ -26,8 +26,8 @@ const DEFAULT_SETTINGS = {
 };
 
 // Seeding Initial Data if localStorage is empty
-function seedDatabase() {
-    console.log("Seeding Kishore Finance database...");
+function seedDatabase(seedMockDemo = false) {
+    console.log("Initializing Kishore Finance database...");
     
     // Seed Settings
     g_settings = { ...DEFAULT_SETTINGS };
@@ -35,193 +35,94 @@ function seedDatabase() {
     // Seed Users
     seedUsersOnly();
 
-    // Seed 3 Customers
-    g_customers = [
-        {
-            id: "CUST-1001",
-            name: "Rajesh Kumar",
-            mobile: "9876543210",
-            altMobile: "9876543211",
-            address: "No 12, Gandhi Street, T-Nagar",
-            city: "Chennai",
-            district: "Chennai",
-            state: "Tamil Nadu",
-            guarantorName: "Suresh Kumar",
-            guarantorAddress: "No 14, Gandhi Street, T-Nagar, Chennai",
-            guarantorMobile: "9000112233",
-            photo: SVG_PHOTO_MOCK,
-            aadhaar: SVG_AADHAAR_MOCK,
-            status: "Active",
-            createdDate: "2026-08-01"
-        },
-        {
-            id: "CUST-1002",
-            name: "Anjali Sharma",
-            mobile: "8765432109",
-            altMobile: "",
-            address: "45-B, Park View Avenue, Anna Nagar",
-            city: "Chennai",
-            district: "Chennai",
-            state: "Tamil Nadu",
-            guarantorName: "Mohan Sharma",
-            guarantorAddress: "45-B, Park View Avenue, Anna Nagar, Chennai",
-            guarantorMobile: "9111223344",
-            photo: SVG_PHOTO_MOCK,
-            aadhaar: SVG_AADHAAR_MOCK,
-            status: "Active",
-            createdDate: "2026-08-03"
-        },
-        {
-            id: "CUST-1003",
-            name: "Vikram Singh",
-            mobile: "7654321098",
-            altMobile: "7654321090",
-            address: "7A, Ring Road Circle",
-            city: "Madurai",
-            district: "Madurai",
-            state: "Tamil Nadu",
-            guarantorName: "Sunita Singh",
-            guarantorAddress: "7A, Ring Road Circle, Madurai",
-            guarantorMobile: "9222334455",
-            photo: SVG_PHOTO_MOCK,
-            aadhaar: SVG_AADHAAR_MOCK,
-            status: "Blocked",
-            createdDate: "2026-08-05"
-        }
-    ];
-
-    // Seed Loans
-    g_loans = [
-        {
-            id: "LOAN-5001",
-            customerId: "CUST-1001",
-            category: "Personal",
-            principal: 50000,
-            interestRate: 2.00, // 2 Paisa pm
-            calculationType: "Flat",
-            frequency: "Monthly",
-            installmentAmount: 5000, // Manually set
-            startDate: "2026-08-01",
-            endDate: "2027-06-01",
-            status: "Active",
-            processingFee: 500,
-            durationDays: 304,
-            createdDate: "2026-08-01"
-        },
-        {
-            id: "LOAN-5002",
-            customerId: "CUST-1002",
-            category: "Business",
-            principal: 100000,
-            interestRate: 1.50, // 1.5 Paisa pm
-            calculationType: "Reducing",
-            frequency: "Monthly",
-            installmentAmount: 9500,
-            startDate: "2026-08-03",
-            endDate: "2027-08-03",
-            status: "Active",
-            processingFee: 1000,
-            durationDays: 365,
-            createdDate: "2026-08-03"
-        },
-        {
-            id: "LOAN-5003",
-            customerId: "CUST-1003",
-            category: "Gold",
-            principal: 30000,
-            interestRate: 2.50,
-            calculationType: "Flat",
-            frequency: "Weekly",
-            installmentAmount: 1500,
-            startDate: "2026-08-05",
-            endDate: "2026-11-05",
-            status: "Overdue",
-            processingFee: 300,
-            durationDays: 92,
-            createdDate: "2026-08-05"
-        }
-    ];
-
-    // Seed Collections (Historical collections for graphs over last 6 days)
-    const todayStr = new Date().toISOString().split('T')[0];
-    const getPastDateStr = (daysAgo) => {
-        const d = new Date();
-        d.setDate(d.getDate() - daysAgo);
-        return d.toISOString().split('T')[0];
-    };
-
-    g_collections = [
-        {
-            txId: "TXN-7001",
-            loanId: "LOAN-5001",
-            customerId: "CUST-1001",
-            amountCollected: 5000,
-            penaltyPaid: 0,
-            paymentMode: "UPI",
-            transactionDate: getPastDateStr(5),
-            notes: "First installment received"
-        },
-        {
-            txId: "TXN-7002",
-            loanId: "LOAN-5002",
-            customerId: "CUST-1002",
-            amountCollected: 9500,
-            penaltyPaid: 0,
-            paymentMode: "UPI",
-            transactionDate: getPastDateStr(4),
-            notes: "Direct bank transfer"
-        },
-        {
-            txId: "TXN-7003",
-            loanId: "LOAN-5003",
-            customerId: "CUST-1003",
-            amountCollected: 1500,
-            penaltyPaid: 100,
-            paymentMode: "Cash",
-            transactionDate: getPastDateStr(3),
-            notes: "Paid late with penalty"
-        },
-        {
-            txId: "TXN-7004",
-            loanId: "LOAN-5001",
-            customerId: "CUST-1001",
-            amountCollected: 3000, // partial collection
-            penaltyPaid: 0,
-            paymentMode: "Cash",
-            transactionDate: getPastDateStr(1),
-            notes: "Partial payment"
-        },
-        {
-            txId: "TXN-7005",
-            loanId: "LOAN-5002",
-            customerId: "CUST-1002",
-            amountCollected: 5000,
-            penaltyPaid: 0,
-            paymentMode: "UPI",
-            transactionDate: todayStr, // Today's collection
-            notes: "Advance payment"
-        }
-    ];
-
-    // Generate repayment schedules for seeded loans
-    g_loans.forEach(l => {
-        const totalPay = getLoanTotalPayable(l);
-        l.schedule = generateRepaymentSchedule(l.principal, l.installmentAmount, totalPay, l.startDate, l.frequency, l.durationDays);
-    });
-
-    // Allocate historical collections to schedules
-    g_collections.forEach(c => {
-        const loan = getLoanById(c.loanId);
-        if (loan) {
-            allocateCollectionToSchedule(loan, c.amountCollected);
-        }
-    });
+    // Clean initial databases for new records
+    g_customers = [];
+    g_loans = [];
+    g_collections = [];
 
     saveToLocalStorage();
 }
 
+// Reset all customer, loan, and report data (Fresh Start)
+function resetAllBusinessData() {
+    g_customers = [];
+    g_loans = [];
+    g_collections = [];
+    saveToLocalStorage();
+    return true;
+}
+
+// Clear all collections / report entries
+function clearAllCollections() {
+    g_collections = [];
+    // Reset payment allocations on all loans
+    g_loans.forEach(loan => {
+        if (loan.schedule && Array.isArray(loan.schedule)) {
+            loan.schedule.forEach(inst => {
+                inst.paid = 0;
+                inst.status = "Unpaid";
+            });
+        }
+        if ((loan.statusMode || "Auto") === "Auto") {
+            loan.status = "Active";
+        }
+    });
+    saveToLocalStorage();
+    return true;
+}
+
+// Clear all loans and associated collections
+function clearAllLoans() {
+    g_loans = [];
+    g_collections = [];
+    saveToLocalStorage();
+    return true;
+}
+
+// Clear all customers, loans, and collections
+function clearAllCustomers() {
+    g_customers = [];
+    g_loans = [];
+    g_collections = [];
+    saveToLocalStorage();
+    return true;
+}
+
+// Export database backup as JSON
+function exportDatabaseBackup() {
+    const backup = {
+        appName: "Kishore Finance",
+        version: "2.0",
+        exportDate: new Date().toISOString(),
+        settings: g_settings,
+        users: g_users,
+        customers: g_customers,
+        loans: g_loans,
+        collections: g_collections
+    };
+    return JSON.stringify(backup, null, 2);
+}
+
+// Import database backup from JSON
+function importDatabaseBackup(jsonString) {
+    try {
+        const data = JSON.parse(jsonString);
+        if (data.customers && Array.isArray(data.customers)) g_customers = data.customers;
+        if (data.loans && Array.isArray(data.loans)) g_loans = data.loans;
+        if (data.collections && Array.isArray(data.collections)) g_collections = data.collections;
+        if (data.settings && typeof data.settings === "object") g_settings = { ...DEFAULT_SETTINGS, ...data.settings };
+        if (data.users && Array.isArray(data.users)) g_users = data.users;
+        saveToLocalStorage();
+        return true;
+    } catch (e) {
+        console.error("Failed to import database backup:", e);
+        throw new Error("Invalid backup file format: " + e.message);
+    }
+}
+
 // LocalStorage Synchronization
 function saveToLocalStorage() {
+    localStorage.setItem("kf_data_version", "clean_v1");
     localStorage.setItem("kf_settings", JSON.stringify(g_settings));
     localStorage.setItem("kf_customers", JSON.stringify(g_customers));
     localStorage.setItem("kf_loans", JSON.stringify(g_loans));
@@ -230,21 +131,42 @@ function saveToLocalStorage() {
 }
 
 function loadFromLocalStorage() {
+    const dataVersion = localStorage.getItem("kf_data_version");
     const settings = localStorage.getItem("kf_settings");
     const customers = localStorage.getItem("kf_customers");
     const loans = localStorage.getItem("kf_loans");
     const collections = localStorage.getItem("kf_collections");
     const users = localStorage.getItem("kf_users");
 
+    // If version is not clean_v1, perform one-time wipe of demo mock records
+    if (dataVersion !== "clean_v1") {
+        console.log("First clean database initialization - wiping old demo records.");
+        if (settings) {
+            try { g_settings = { ...DEFAULT_SETTINGS, ...JSON.parse(settings) }; } catch(e) { g_settings = { ...DEFAULT_SETTINGS }; }
+        } else {
+            g_settings = { ...DEFAULT_SETTINGS };
+        }
+        if (users) {
+            try { g_users = JSON.parse(users); } catch(e) { seedUsersOnly(); }
+        } else {
+            seedUsersOnly();
+        }
+        g_customers = [];
+        g_loans = [];
+        g_collections = [];
+        saveToLocalStorage();
+        return;
+    }
+
     if (settings && customers && loans && collections) {
         try {
             g_settings = { ...DEFAULT_SETTINGS, ...JSON.parse(settings) };
             g_customers = JSON.parse(customers).map(c => {
                 // Auto-clean any double-quoted broken SVGs in existing local storage
-                if (c.photo.includes('xmlns="http://www.w3.org/2000/svg"')) {
+                if (c.photo && c.photo.includes('xmlns="http://www.w3.org/2000/svg"')) {
                     c.photo = SVG_PHOTO_MOCK;
                 }
-                if (c.aadhaar.includes('xmlns="http://www.w3.org/2000/svg"')) {
+                if (c.aadhaar && c.aadhaar.includes('xmlns="http://www.w3.org/2000/svg"')) {
                     c.aadhaar = SVG_AADHAAR_MOCK;
                 }
                 return c;
@@ -263,13 +185,13 @@ function loadFromLocalStorage() {
                 console.warn("Users node not found. Seeding default admins.");
                 seedUsersOnly();
             }
-            console.log("Database loaded and parsed from local storage (with SVG cleanup).");
+            console.log("Database loaded and parsed from local storage.");
         } catch (e) {
-            console.error("Failed to parse local storage data, re-seeding.", e);
-            seedDatabase();
+            console.error("Failed to parse local storage data, resetting.", e);
+            seedDatabase(false);
         }
     } else {
-        seedDatabase();
+        seedDatabase(false);
     }
 }
 
