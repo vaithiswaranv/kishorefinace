@@ -211,19 +211,31 @@
                             </div>
                         </div>
 
-                        <!-- 5. Pending Payments -->
+                        <!-- 5. Pending Payment -->
                         <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('reports')" title="Click to view in Reports">
                             <div class="kpi-icon icon-amber">
                                 <i class="fa-solid fa-clock"></i>
                             </div>
                             <div class="kpi-info">
-                                <h3>Pending Payments</h3>
+                                <h3>Pending Payment</h3>
                                 <span class="kpi-val text-amber" id="kpi-pending-payments">₹0.00</span>
                                 <span class="kpi-trend trend-down" id="kpi-pending-payments-count"><i class="fa-solid fa-triangle-exclamation"></i> 0 Collections Pending</span>
                             </div>
                         </div>
 
-                        <!-- 6. Overdue Dues -->
+                        <!-- 6. Total Pending Payment -->
+                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('loans')" title="Click to view remaining balance across all active loans">
+                            <div class="kpi-icon icon-indigo">
+                                <i class="fa-solid fa-hourglass-half"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Total Pending Payment</h3>
+                                <span class="kpi-val text-indigo" id="kpi-total-pending">₹0.00</span>
+                                <span class="kpi-trend trend-down" id="kpi-total-pending-sub"><i class="fa-solid fa-wallet"></i> Total Remaining Dues</span>
+                            </div>
+                        </div>
+
+                        <!-- 7. Overdue Dues -->
                         <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('reports')" title="Click to view in Reports">
                             <div class="kpi-icon icon-rose">
                                 <i class="fa-solid fa-circle-exclamation"></i>

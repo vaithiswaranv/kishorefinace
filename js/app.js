@@ -521,6 +521,12 @@ function renderDashboard() {
     const elPendCount = document.getElementById("kpi-pending-payments-count");
     if (elPendCount) elPendCount.textContent = `${kpis.pendingInstallmentsCount} Collections Pending`;
 
+    // Total Pending Payment (Remaining amount across all active loans)
+    const elTotPending = document.getElementById("kpi-total-pending");
+    if (elTotPending) elTotPending.textContent = g_settings.currency + kpis.outstandingAmount.toLocaleString();
+    const elTotPendingSub = document.getElementById("kpi-total-pending-sub");
+    if (elTotPendingSub) elTotPendingSub.innerHTML = `<i class="fa-solid fa-wallet"></i> Total Remaining Dues`;
+
     const elOvdBal = document.getElementById("kpi-overdue-balance");
     if (elOvdBal) elOvdBal.textContent = g_settings.currency + kpis.overdueBalance.toLocaleString();
 
@@ -603,14 +609,27 @@ function renderDashboard() {
         } else {
             pendingItems.forEach((item, idx) => {
                 const row = document.createElement("tr");
-                const badgeClass = item.isOverdue ? "badge badge-overdue" : "badge badge-pending";
+                let badgeClass = "badge badge-pending";
+                let statusText = `<i class="fa-solid fa-clock"></i> Due Today`;
+                let dateDisplay = `<span style="color:var(--clr-amber); font-weight:600;"><i class="fa-solid fa-calendar-day"></i> Today (${formatDateToDMY(item.dueDate)})</span>`;
+
+                if (item.isOverdue) {
+                    badgeClass = "badge badge-overdue";
+                    statusText = `<i class="fa-solid fa-triangle-exclamation"></i> Missed`;
+                    dateDisplay = `<span style="color:var(--clr-rose); font-weight:600;"><i class="fa-solid fa-calendar-xmark"></i> ${formatDateToDMY(item.dueDate)}</span>`;
+                } else if (!item.isDueToday) {
+                    badgeClass = "badge";
+                    statusText = item.status;
+                    dateDisplay = formatDateToDMY(item.dueDate);
+                }
+
                 row.innerHTML = `
                     <td><strong>${idx + 1}</strong></td>
-                    <td>${formatDateToDMY(item.dueDate)}</td>
+                    <td>${dateDisplay}</td>
                     <td><strong>${item.borrowerName}</strong></td>
                     <td><span class="badge badge-indigo">${item.loanId}</span></td>
                     <td class="text-right text-amber">₹${item.pendingAmount.toLocaleString()}</td>
-                    <td class="text-center"><span class="${badgeClass}">${item.status}</span></td>
+                    <td class="text-center"><span class="${badgeClass}">${statusText}</span></td>
                     <td class="text-center">
                         <button class="btn btn-primary btn-xs" onclick="openPaymentFormForLoan('${item.loanId}')" title="Record collection for this loan"><i class="fa-solid fa-indian-rupee-sign"></i> Pay</button>
                     </td>
@@ -2513,12 +2532,18 @@ function renderReports() {
         } else {
             unpaidRows.forEach((r, idx) => {
                 const row = document.createElement("tr");
-                const statusBadge = r.isOverdue ? 
-                    `<span class="badge badge-overdue">Overdue</span>` : 
-                    `<span class="badge badge-pending">Pending</span>`;
+                let statusBadge = `<span class="badge badge-pending"><i class="fa-solid fa-clock"></i> Due Today</span>`;
+                let dateDisplay = `<span style="color:var(--clr-amber); font-weight:600;"><i class="fa-solid fa-calendar-day"></i> Today (${formatDateToDMY(r.dueDate)})</span>`;
+                if (r.isOverdue) {
+                    statusBadge = `<span class="badge badge-overdue"><i class="fa-solid fa-triangle-exclamation"></i> Missed Due</span>`;
+                    dateDisplay = `<span style="color:var(--clr-rose); font-weight:600;"><i class="fa-solid fa-calendar-xmark"></i> ${formatDateToDMY(r.dueDate)}</span>`;
+                } else if (!r.isDueToday) {
+                    statusBadge = `<span class="badge badge-pending">${r.status}</span>`;
+                    dateDisplay = formatDateToDMY(r.dueDate);
+                }
                 row.innerHTML = `
                     <td><strong>${idx + 1}</strong></td>
-                    <td>${formatDateToDMY(r.dueDate)}</td>
+                    <td>${dateDisplay}</td>
                     <td><strong>${r.customerId}</strong></td>
                     <td><strong>${r.borrowerName}</strong></td>
                     <td><span class="badge badge-indigo">${r.loanId}</span></td>

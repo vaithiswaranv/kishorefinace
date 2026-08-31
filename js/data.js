@@ -675,7 +675,7 @@ function calculateKPIs() {
 
             if (loan.schedule && Array.isArray(loan.schedule)) {
                 loan.schedule.forEach(inst => {
-                    if (inst.dueDate < todayStr) {
+                    if (inst.dueDate <= todayStr) {
                         const unpaid = inst.amount - (inst.paid || 0);
                         if (unpaid > 0) {
                             pendingInstallmentsCount++;
@@ -748,12 +748,13 @@ function getAllPendingPayments(startDateStr = null, endDateStr = null, searchQue
                 const unpaid = inst.amount - (inst.paid || 0);
                 if (unpaid > 0) {
                     const isOverdue = inst.dueDate < todayStr;
-                    const instStatus = isOverdue ? "Overdue" : "Pending";
+                    const isDueToday = inst.dueDate === todayStr;
+                    const instStatus = isOverdue ? "Missed" : (isDueToday ? "Due Today" : "Pending");
 
                     // When no explicit date range is specified (e.g. Dashboard pending overview),
-                    // only show past unpaid installments (inst.dueDate < todayStr).
-                    // If today's payment isn't made, it will be indicated tomorrow.
-                    if (!startDateStr && !endDateStr && inst.dueDate >= todayStr) return;
+                    // show past unpaid missed installments (dueDate < todayStr) and today's due installment (dueDate === todayStr).
+                    // Exclude future installments (dueDate > todayStr).
+                    if (!startDateStr && !endDateStr && inst.dueDate > todayStr) return;
 
                     if (startDateStr && inst.dueDate < startDateStr) return;
                     if (endDateStr && inst.dueDate > endDateStr) return;
@@ -773,6 +774,7 @@ function getAllPendingPayments(startDateStr = null, endDateStr = null, searchQue
                         pendingAmount: Math.round(unpaid * 100) / 100,
                         status: instStatus,
                         isOverdue: isOverdue,
+                        isDueToday: isDueToday,
                         mobile: borrower ? borrower.mobile : ""
                     });
                 }
@@ -871,7 +873,7 @@ function generateRepaymentSchedule(principal, installmentAmount, totalPayable, s
         const current = new Date(start);
         
         if (frequency === "Daily") {
-            current.setDate(current.getDate() + count);
+            current.setDate(current.getDate() + (count - 1));
         } else if (frequency === "Weekly") {
             current.setDate(current.getDate() + count * 7);
         } else if (frequency === "Monthly") {
