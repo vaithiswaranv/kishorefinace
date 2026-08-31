@@ -711,7 +711,7 @@ function exportReportsPDF(startStr, endStr) {
                     l.schedule.forEach(inst => {
                         if (inst.dueDate >= startStr && inst.dueDate <= endStr) {
                             if (!inst.paid && inst.status !== "Paid") {
-                                const isOverdue = inst.dueDate <= todayStr;
+                                const isOverdue = inst.dueDate < todayStr;
                                 if (status === "All" || 
                                     (status === "Pending" && !isOverdue) || 
                                     (status === "Overdue" && isOverdue)) {
@@ -961,5 +961,483 @@ function exportSingleLoanPDF(loanId) {
     doc.save(`Statement_Loan_${loan.id}.pdf`);
 }
 
+// 1. Export Daily Collections Register PDF
+function exportDailyCollectionsPDF(startStr, endStr) {
+    if (!startStr || !endStr) {
+        const startInput = document.getElementById("report-start-date");
+        const endInput = document.getElementById("report-end-date");
+        if (startInput) startStr = startInput.value;
+        if (endInput) endStr = endInput.value;
+    }
+    if (!startStr || !endStr) {
+        alert("Please select a valid date range first.");
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+    });
+
+    const query = document.getElementById("report-search-query") ? document.getElementById("report-search-query").value.toLowerCase().trim() : "";
+    const mode = document.getElementById("report-filter-mode") ? document.getElementById("report-filter-mode").value : "All";
+
+    const matchSearch = (cid, lid, bName) => {
+        if (!query) return true;
+        return cid.toLowerCase().includes(query) || 
+               lid.toLowerCase().includes(query) || 
+               bName.toLowerCase().includes(query);
+    };
+
+    const collectionsList = [];
+    g_collections.forEach(c => {
+        if (c.transactionDate >= startStr && c.transactionDate <= endStr) {
+            const borrower = getCustomerById(c.customerId);
+            const name = borrower ? borrower.name : "Unknown";
+            if (matchSearch(c.customerId, c.loanId, name)) {
+                if (mode === "All" || c.paymentMode === mode || 
+                    (mode === "UPI" && (c.paymentMode === "UPI" || c.paymentMode === "UPI / GPay" || c.paymentMode === "UPI/GPay")) || 
+                    (mode === "NetBanking" && (c.paymentMode === "NetBanking" || c.paymentMode === "Net Banking"))) {
+                    collectionsList.push({
+                        date: c.transactionDate,
+                        customerId: c.customerId,
+                        borrowerName: name,
+                        loanId: c.loanId,
+                        amount: c.amountCollected,
+                        penalty: c.penaltyPaid,
+                        mode: c.paymentMode,
+                        remarks: c.notes || "-"
+                    });
+                }
+            }
+        }
+    });
+
+    const totalCollected = collectionsList.reduce((sum, r) => sum + r.amount, 0);
+    const totalPenalty = collectionsList.reduce((sum, r) => sum + r.penalty, 0);
+
+    // 1. BRAND HEADER
+    doc.setFillColor(11, 15, 25);
+    doc.rect(0, 0, 210, 40, "F");
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("KISHORE FINANCE", 15, 18);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(16, 185, 129); // Emerald accent
+    doc.text("DAILY COLLECTIONS REGISTER", 15, 24);
+
+    doc.setFontSize(8);
+    doc.setTextColor(156, 163, 175);
+    doc.text(`Period: ${formatDateToDMY(startStr)} to ${formatDateToDMY(endStr)} | Payment Mode: ${mode} | Generated: ${new Date().toLocaleString()}`, 15, 34);
+
+    // 2. SUMMARY STATS
+    let y = 50;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(17, 24, 39);
+    doc.text("COLLECTIONS SUMMARY", 15, y);
+    doc.setDrawColor(229, 231, 235);
+    doc.setLineWidth(0.2);
+    doc.line(15, y + 2, 195, y + 2);
+
+    y += 10;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(107, 114, 128);
+    doc.text("Total Collections", 15, y);
+    doc.text("Total Late Fees", 85, y);
+    doc.text("Total Transactions", 150, y);
+
+    y += 5;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(16, 185, 129);
+    doc.text(`Rs.${totalCollected.toLocaleString()}`, 15, y);
+    doc.setTextColor(245, 158, 11);
+    doc.text(`Rs.${totalPenalty.toLocaleString()}`, 85, y);
+    doc.setTextColor(99, 102, 241);
+    doc.text(`${collectionsList.length} Entries`, 150, y);
+
+    // 3. TABLE
+    y += 15;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(17, 24, 39);
+    doc.text("COLLECTIONS ENTRIES", 15, y);
+    doc.line(15, y + 2, 195, y + 2);
+
+    y += 8;
+    doc.setFontSize(8);
+    doc.setTextColor(55, 65, 81);
+    doc.text("No.", 15, y);
+    doc.text("Date", 25, y);
+    doc.text("Cust ID", 45, y);
+    doc.text("Borrower Name", 65, y);
+    doc.text("Loan ID", 110, y);
+    doc.text("Collected (Rs)", 130, y);
+    doc.text("Penalty (Rs)", 155, y);
+    doc.text("Mode", 175, y);
+
+    doc.setDrawColor(209, 213, 219);
+    doc.line(15, y + 2, 195, y + 2);
+    y += 6;
+
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(75, 85, 99);
+
+    if (collectionsList.length === 0) {
+        doc.text("No collections recorded in selected date range.", 15, y);
+    } else {
+        collectionsList.forEach((r, idx) => {
+            if (y > 275) {
+                doc.addPage();
+                y = 20;
+                doc.setFont("helvetica", "bold");
+                doc.text("No.", 15, y);
+                doc.text("Date", 25, y);
+                doc.text("Cust ID", 45, y);
+                doc.text("Borrower Name", 65, y);
+                doc.text("Loan ID", 110, y);
+                doc.text("Collected (Rs)", 130, y);
+                doc.text("Penalty (Rs)", 155, y);
+                doc.text("Mode", 175, y);
+                doc.line(15, y + 2, 195, y + 2);
+                y += 8;
+                doc.setFont("helvetica", "normal");
+            }
+            doc.text(`${idx + 1}`, 15, y);
+            doc.text(formatDateToDMY(r.date), 25, y);
+            doc.text(r.customerId, 45, y);
+            doc.text(r.borrowerName.substring(0, 18), 65, y);
+            doc.text(r.loanId, 110, y);
+            doc.text(`Rs.${r.amount.toLocaleString()}`, 130, y);
+            doc.text(`Rs.${r.penalty.toLocaleString()}`, 155, y);
+            doc.text(r.mode, 175, y);
+            y += 6;
+        });
+    }
+
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(7);
+    doc.setTextColor(156, 163, 175);
+    doc.text("This official daily collections register is computer-generated. System validated copy.", 15, 285);
+
+    doc.save(`KishoreFinance_DailyCollections_${startStr}_to_${endStr}.pdf`);
+}
+
+// 2. Export Operations Register PDF
+function exportOperationsPDF(startStr, endStr) {
+    if (!startStr || !endStr) {
+        const startInput = document.getElementById("report-start-date");
+        const endInput = document.getElementById("report-end-date");
+        if (startInput) startStr = startInput.value;
+        if (endInput) endStr = endInput.value;
+    }
+    if (!startStr || !endStr) {
+        alert("Please select a valid date range first.");
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+    });
+
+    const query = document.getElementById("report-search-query") ? document.getElementById("report-search-query").value.toLowerCase().trim() : "";
+
+    const matchSearch = (cid, lid, bName) => {
+        if (!query) return true;
+        return cid.toLowerCase().includes(query) || 
+               lid.toLowerCase().includes(query) || 
+               bName.toLowerCase().includes(query);
+    };
+
+    const opsLoans = g_loans.filter(l => {
+        const borrower = getCustomerById(l.customerId);
+        const name = borrower ? borrower.name : "Unknown";
+        return l.startDate >= startStr && 
+               l.startDate <= endStr && 
+               matchSearch(l.customerId, l.id, name);
+    });
+
+    const totalDisbursed = opsLoans.reduce((sum, l) => sum + l.principal, 0);
+    const totalHandover = opsLoans.reduce((sum, l) => sum + (l.principal - (l.processingFee || 0) - (l.documentFee || 0)), 0);
+    const totalFees = opsLoans.reduce((sum, l) => sum + (parseFloat(l.processingFee || 0) + parseFloat(l.documentFee || 0)), 0);
+
+    // 1. BRAND HEADER
+    doc.setFillColor(11, 15, 25);
+    doc.rect(0, 0, 210, 40, "F");
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("KISHORE FINANCE", 15, 18);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(6, 182, 212); // Cyan accent
+    doc.text("OPERATIONS REGISTER (LOANS DISBURSED & ACCOUNTS OPENED)", 15, 24);
+
+    doc.setFontSize(8);
+    doc.setTextColor(156, 163, 175);
+    doc.text(`Period: ${formatDateToDMY(startStr)} to ${formatDateToDMY(endStr)} | Generated: ${new Date().toLocaleString()}`, 15, 34);
+
+    // 2. SUMMARY STATS
+    let y = 50;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(17, 24, 39);
+    doc.text("OPERATIONS SUMMARY", 15, y);
+    doc.setDrawColor(229, 231, 235);
+    doc.setLineWidth(0.2);
+    doc.line(15, y + 2, 195, y + 2);
+
+    y += 10;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(107, 114, 128);
+    doc.text("Total Disbursed", 15, y);
+    doc.text("Net Handover Cost", 75, y);
+    doc.text("Upfront Fees", 135, y);
+    doc.text("Accounts Opened", 170, y);
+
+    y += 5;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(99, 102, 241);
+    doc.text(`Rs.${totalDisbursed.toLocaleString()}`, 15, y);
+    doc.setTextColor(6, 182, 212);
+    doc.text(`Rs.${totalHandover.toLocaleString()}`, 75, y);
+    doc.setTextColor(16, 185, 129);
+    doc.text(`Rs.${totalFees.toLocaleString()}`, 135, y);
+    doc.setTextColor(17, 24, 39);
+    doc.text(`${opsLoans.length}`, 170, y);
+
+    // 3. TABLE
+    y += 15;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(17, 24, 39);
+    doc.text("DISBURSED LOANS REGISTRY", 15, y);
+    doc.line(15, y + 2, 195, y + 2);
+
+    y += 8;
+    doc.setFontSize(8);
+    doc.setTextColor(55, 65, 81);
+    doc.text("No.", 15, y);
+    doc.text("Disbursed", 25, y);
+    doc.text("Cust ID", 45, y);
+    doc.text("Borrower Name", 65, y);
+    doc.text("Loan ID", 105, y);
+    doc.text("Principal", 125, y);
+    doc.text("Handover", 148, y);
+    doc.text("Collection", 170, y);
+    doc.text("Status", 188, y);
+
+    doc.setDrawColor(209, 213, 219);
+    doc.line(15, y + 2, 195, y + 2);
+    y += 6;
+
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(75, 85, 99);
+
+    if (opsLoans.length === 0) {
+        doc.text("No loans disbursed in selected date range.", 15, y);
+    } else {
+        opsLoans.forEach((l, idx) => {
+            if (y > 275) {
+                doc.addPage();
+                y = 20;
+                doc.setFont("helvetica", "bold");
+                doc.text("No.", 15, y);
+                doc.text("Disbursed", 25, y);
+                doc.text("Cust ID", 45, y);
+                doc.text("Borrower Name", 65, y);
+                doc.text("Loan ID", 105, y);
+                doc.text("Principal", 125, y);
+                doc.text("Handover", 148, y);
+                doc.text("Collection", 170, y);
+                doc.text("Status", 188, y);
+                doc.line(15, y + 2, 195, y + 2);
+                y += 8;
+                doc.setFont("helvetica", "normal");
+            }
+            const borrower = getCustomerById(l.customerId);
+            const name = borrower ? borrower.name : "Unknown";
+            const handover = l.principal - (l.processingFee || 0) - (l.documentFee || 0);
+
+            doc.text(`${idx + 1}`, 15, y);
+            doc.text(formatDateToDMY(l.startDate), 25, y);
+            doc.text(l.customerId, 45, y);
+            doc.text(name.substring(0, 16), 65, y);
+            doc.text(l.id, 105, y);
+            doc.text(`Rs.${l.principal.toLocaleString()}`, 125, y);
+            doc.text(`Rs.${handover.toLocaleString()}`, 148, y);
+            doc.text(`Rs.${(l.installmentAmount || 0).toLocaleString()}`, 170, y);
+            doc.text(l.status, 188, y);
+            y += 6;
+        });
+    }
+
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(7);
+    doc.setTextColor(156, 163, 175);
+    doc.text("This official operations register is computer-generated. System validated copy.", 15, 285);
+
+    doc.save(`KishoreFinance_OperationsRegister_${startStr}_to_${endStr}.pdf`);
+}
+
+// 3. Export Unpaid Collections Register PDF
+function exportUnpaidCollectionsPDF(startStr, endStr) {
+    if (!startStr || !endStr) {
+        const startInput = document.getElementById("report-start-date");
+        const endInput = document.getElementById("report-end-date");
+        if (startInput) startStr = startInput.value;
+        if (endInput) endStr = endInput.value;
+    }
+    if (!startStr || !endStr) {
+        alert("Please select a valid date range first.");
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+    });
+
+    const query = document.getElementById("report-search-query") ? document.getElementById("report-search-query").value.toLowerCase().trim() : "";
+    const status = document.getElementById("report-filter-status") ? document.getElementById("report-filter-status").value : "All";
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const unpaidRows = getAllPendingPayments(startStr, endStr, query, status);
+    const totalUnpaid = unpaidRows.reduce((sum, r) => sum + r.pendingAmount, 0);
+    const overdueCount = unpaidRows.filter(r => r.isOverdue).length;
+
+    // 1. BRAND HEADER
+    doc.setFillColor(11, 15, 25);
+    doc.rect(0, 0, 210, 40, "F");
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("KISHORE FINANCE", 15, 18);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(244, 63, 94); // Rose accent
+    doc.text("UNPAID COLLECTIONS REGISTER (PENDING & OVERDUE)", 15, 24);
+
+    doc.setFontSize(8);
+    doc.setTextColor(156, 163, 175);
+    doc.text(`Period: ${formatDateToDMY(startStr)} to ${formatDateToDMY(endStr)} | Status Filter: ${status} | Generated: ${new Date().toLocaleString()}`, 15, 34);
+
+    // 2. SUMMARY STATS
+    let y = 50;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(17, 24, 39);
+    doc.text("UNPAID DUES SUMMARY", 15, y);
+    doc.setDrawColor(229, 231, 235);
+    doc.setLineWidth(0.2);
+    doc.line(15, y + 2, 195, y + 2);
+
+    y += 10;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(107, 114, 128);
+    doc.text("Total Amount Due", 15, y);
+    doc.text("Total Unpaid Dues", 85, y);
+    doc.text("Overdue Accounts", 150, y);
+
+    y += 5;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(245, 158, 11); // Amber
+    doc.text(`Rs.${totalUnpaid.toLocaleString()}`, 15, y);
+    doc.setTextColor(99, 102, 241);
+    doc.text(`${unpaidRows.length} Items`, 85, y);
+    doc.setTextColor(244, 63, 94); // Rose
+    doc.text(`${overdueCount} Overdue`, 150, y);
+
+    // 3. TABLE
+    y += 15;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(17, 24, 39);
+    doc.text("UNPAID INSTALLMENTS SCHEDULE", 15, y);
+    doc.line(15, y + 2, 195, y + 2);
+
+    y += 8;
+    doc.setFontSize(8);
+    doc.setTextColor(55, 65, 81);
+    doc.text("No.", 15, y);
+    doc.text("Due Date", 25, y);
+    doc.text("Cust ID", 45, y);
+    doc.text("Borrower Name", 65, y);
+    doc.text("Loan ID", 110, y);
+    doc.text("Collection Type", 130, y);
+    doc.text("Amount Due (Rs)", 155, y);
+    doc.text("Status", 180, y);
+
+    doc.setDrawColor(209, 213, 219);
+    doc.line(15, y + 2, 195, y + 2);
+    y += 6;
+
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(75, 85, 99);
+
+    if (unpaidRows.length === 0) {
+        doc.text("No unpaid collections found in selected date range.", 15, y);
+    } else {
+        unpaidRows.forEach((r, idx) => {
+            if (y > 275) {
+                doc.addPage();
+                y = 20;
+                doc.setFont("helvetica", "bold");
+                doc.text("No.", 15, y);
+                doc.text("Due Date", 25, y);
+                doc.text("Cust ID", 45, y);
+                doc.text("Borrower Name", 65, y);
+                doc.text("Loan ID", 110, y);
+                doc.text("Collection Type", 130, y);
+                doc.text("Amount Due (Rs)", 155, y);
+                doc.text("Status", 180, y);
+                doc.line(15, y + 2, 195, y + 2);
+                y += 8;
+                doc.setFont("helvetica", "normal");
+            }
+            doc.text(`${idx + 1}`, 15, y);
+            doc.text(formatDateToDMY(r.dueDate), 25, y);
+            doc.text(r.customerId, 45, y);
+            doc.text(r.borrowerName.substring(0, 18), 65, y);
+            doc.text(r.loanId, 110, y);
+            doc.text(r.frequency, 130, y);
+            doc.text(`Rs.${r.pendingAmount.toLocaleString()}`, 155, y);
+            doc.text(r.isOverdue ? "Overdue" : "Pending", 180, y);
+            y += 6;
+        });
+    }
+
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(7);
+    doc.setTextColor(156, 163, 175);
+    doc.text("This official unpaid collections register is computer-generated. System validated copy.", 15, 285);
+
+    doc.save(`KishoreFinance_UnpaidCollections_${startStr}_to_${endStr}.pdf`);
+}
+
 window.exportReportsPDF = exportReportsPDF;
+window.exportDailyCollectionsPDF = exportDailyCollectionsPDF;
+window.exportOperationsPDF = exportOperationsPDF;
+window.exportUnpaidCollectionsPDF = exportUnpaidCollectionsPDF;
 window.exportSingleLoanPDF = exportSingleLoanPDF;

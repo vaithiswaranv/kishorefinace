@@ -545,13 +545,15 @@ function renderDashboard() {
     const elProfitSub = document.getElementById("kpi-total-profit-sub");
     if (elProfitSub) elProfitSub.innerHTML = `<i class="fa-solid fa-calculator"></i> Fee + Total - Handover`;
 
-    // Collection Profit (Formula: Upfront Processing Fee + Profit from Completed Loans)
+    // Collection Profit (Formula: Upfront Processing Fee + Collections beyond Handover Cost)
     const elColProfit = document.getElementById("kpi-collection-profit");
     if (elColProfit) elColProfit.textContent = g_settings.currency + kpis.collectionProfit.toLocaleString();
     const elColProfitSub = document.getElementById("kpi-collection-profit-sub");
     if (elColProfitSub) {
         if (kpis.completedLoansCount > 0) {
             elColProfitSub.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${kpis.completedLoansCount} Settled Loan${kpis.completedLoansCount > 1 ? 's' : ''} + Fees`;
+        } else if (kpis.collectionProfit > kpis.totalProcessingFees) {
+            elColProfitSub.innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i> Fees + Collections Profit`;
         } else {
             elColProfitSub.innerHTML = `<i class="fa-solid fa-receipt"></i> Upfront Fees Collected`;
         }
@@ -1944,6 +1946,10 @@ function updateRepaymentPreview(forceAutofillInstallment = false) {
     }
     document.getElementById("preview-calc-payable").textContent = g_settings.currency + Math.round(details.totalPayable).toLocaleString();
     document.getElementById("preview-calc-count").textContent = details.installmentsCount;
+    const instAmtEl = document.getElementById("preview-calc-installment");
+    if (instAmtEl) {
+        instAmtEl.textContent = g_settings.currency + (parseFloat(details.installmentAmount) || 0).toLocaleString();
+    }
 
     // Fill installment input only when not manually entered or forced recalc
     if (!g_isManualInstallment || forceAutofillInstallment || !instInput.value) {
@@ -2215,6 +2221,34 @@ function initReports() {
             const startStr = document.getElementById("report-start-date").value;
             const endStr = document.getElementById("report-end-date").value;
             exportReportsPDF(startStr, endStr);
+        });
+    }
+
+    // Individual Register Table PDF Exporters
+    const exportDailyBtn = document.getElementById("btn-export-daily-collections-pdf");
+    if (exportDailyBtn) {
+        exportDailyBtn.addEventListener("click", () => {
+            const startStr = document.getElementById("report-start-date").value;
+            const endStr = document.getElementById("report-end-date").value;
+            exportDailyCollectionsPDF(startStr, endStr);
+        });
+    }
+
+    const exportOpsBtn = document.getElementById("btn-export-operations-pdf");
+    if (exportOpsBtn) {
+        exportOpsBtn.addEventListener("click", () => {
+            const startStr = document.getElementById("report-start-date").value;
+            const endStr = document.getElementById("report-end-date").value;
+            exportOperationsPDF(startStr, endStr);
+        });
+    }
+
+    const exportUnpaidBtn = document.getElementById("btn-export-unpaid-collections-pdf");
+    if (exportUnpaidBtn) {
+        exportUnpaidBtn.addEventListener("click", () => {
+            const startStr = document.getElementById("report-start-date").value;
+            const endStr = document.getElementById("report-end-date").value;
+            exportUnpaidCollectionsPDF(startStr, endStr);
         });
     }
 

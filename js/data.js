@@ -483,7 +483,7 @@ function getLoanOverdueBalance(loanId) {
     let totalOverdue = 0;
 
     loan.schedule.forEach(inst => {
-        if (inst.dueDate <= todayStr) {
+        if (inst.dueDate < todayStr) {
             const unpaid = inst.amount - (inst.paid || 0);
             if (unpaid > 0) {
                 totalOverdue += unpaid;
@@ -653,13 +653,15 @@ function calculateKPIs() {
         if (isFullyPaid) {
             const collected = getLoanCollectedAmount(loan.id);
             const finalCollected = collected > 0 ? collected : payable;
-            const profitBeyondHandover = finalCollected - handover;
-            collectionProfit += profitBeyondHandover;
-            completedLoansProfit += profitBeyondHandover;
+            const profitBeyondHandover = Math.max(0, finalCollected - handover);
+            collectionProfit += upfrontFee + profitBeyondHandover;
+            completedLoansProfit += upfrontFee + profitBeyondHandover;
             completedLoansCount++;
         } else {
-            // For active loans, only the upfront processing fee is added initially
-            collectionProfit += upfrontFee;
+            // For active loans: upfront fee + any collection profit beyond handover cost
+            const collected = getLoanCollectedAmount(loan.id);
+            const profitBeyondHandover = Math.max(0, collected - handover);
+            collectionProfit += upfrontFee + profitBeyondHandover;
         }
 
         if (loan.status !== "Closed") {
@@ -673,10 +675,12 @@ function calculateKPIs() {
 
             if (loan.schedule && Array.isArray(loan.schedule)) {
                 loan.schedule.forEach(inst => {
-                    const unpaid = inst.amount - (inst.paid || 0);
-                    if (unpaid > 0) {
-                        pendingInstallmentsCount++;
-                        pendingInstallmentsAmount += unpaid;
+                    if (inst.dueDate < todayStr) {
+                        const unpaid = inst.amount - (inst.paid || 0);
+                        if (unpaid > 0) {
+                            pendingInstallmentsCount++;
+                            pendingInstallmentsAmount += unpaid;
+                        }
                     }
                 });
             }
@@ -743,8 +747,13 @@ function getAllPendingPayments(startDateStr = null, endDateStr = null, searchQue
             loan.schedule.forEach(inst => {
                 const unpaid = inst.amount - (inst.paid || 0);
                 if (unpaid > 0) {
-                    const isOverdue = inst.dueDate <= todayStr;
+                    const isOverdue = inst.dueDate < todayStr;
                     const instStatus = isOverdue ? "Overdue" : "Pending";
+
+                    // When no explicit date range is specified (e.g. Dashboard pending overview),
+                    // only show past unpaid installments (inst.dueDate < todayStr).
+                    // If today's payment isn't made, it will be indicated tomorrow.
+                    if (!startDateStr && !endDateStr && inst.dueDate >= todayStr) return;
 
                     if (startDateStr && inst.dueDate < startDateStr) return;
                     if (endDateStr && inst.dueDate > endDateStr) return;

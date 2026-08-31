@@ -619,6 +619,9 @@
                     <div class="table-container glass margin-top">
                         <div class="card-header-row card-padding-x" style="padding-top: 15px;">
                             <h3><i class="fa-solid fa-receipt text-gradient"></i> Daily Collections Register</h3>
+                            <button class="btn btn-secondary btn-xs" id="btn-export-daily-collections-pdf" title="Export Daily Collections Register as PDF">
+                                <i class="fa-solid fa-file-pdf text-rose"></i> Export PDF
+                            </button>
                         </div>
                         <div class="table-scroll-wrapper">
                             <table class="custom-table" id="reports-main-table">
@@ -647,6 +650,9 @@
                     <div class="table-container glass margin-top">
                         <div class="card-header-row card-padding-x" style="padding-top: 15px;">
                             <h3><i class="fa-solid fa-hand-holding-dollar text-gradient"></i> Operations Register (Loans Disbursed & Accounts Opened)</h3>
+                            <button class="btn btn-secondary btn-xs" id="btn-export-operations-pdf" title="Export Operations Register as PDF">
+                                <i class="fa-solid fa-file-pdf text-rose"></i> Export PDF
+                            </button>
                         </div>
                         <div class="table-scroll-wrapper">
                             <table class="custom-table" id="reports-operations-table">
@@ -674,7 +680,10 @@
                     <!-- Unpaid Collections Registry Report Table -->
                     <div class="table-container glass margin-top">
                         <div class="card-header-row card-padding-x" style="padding-top: 15px;">
-                            <h3>Unpaid Collections Register (Pending & Overdue)</h3>
+                            <h3><i class="fa-solid fa-clock text-amber"></i> Unpaid Collections Register (Pending & Overdue)</h3>
+                            <button class="btn btn-secondary btn-xs" id="btn-export-unpaid-collections-pdf" title="Export Unpaid Collections Register as PDF">
+                                <i class="fa-solid fa-file-pdf text-rose"></i> Export PDF
+                            </button>
                         </div>
                         <div class="table-scroll-wrapper">
                             <table class="custom-table" id="reports-unpaid-table">
@@ -1118,6 +1127,7 @@
                             <div>Handover Cost: <strong id="preview-calc-handover" class="text-cyan">₹0.00</strong></div>
                             <div>Total Payable: <strong id="preview-calc-payable">₹0.00</strong></div>
                             <div>No. of Collections: <strong id="preview-calc-count">0</strong></div>
+                            <div>Collection Amount: <strong id="preview-calc-installment" class="text-emerald">₹0.00</strong></div>
                         </div>
                     </div>
 
