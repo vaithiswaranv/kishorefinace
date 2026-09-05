@@ -1,5 +1,6 @@
 /* ==========================================================================
-   Kishore Finance PDF Exporter - js/pdf.js
+   FinFlow PDF Exporter - js/pdf.js
+   Simplify Finance. Streamline Business
    ========================================================================== */
 
 // Helper to convert base64 SVG (used in mock data) to standard PNG for jsPDF support
@@ -60,7 +61,7 @@ function exportCustomerProfilePDF(customerId) {
             doc.setTextColor(255, 255, 255);
             doc.setFont("helvetica", "bold");
             doc.setFontSize(22);
-            doc.text("KISHORE FINANCE", 15, 20);
+            doc.text((g_settings && g_settings.companyName) ? g_settings.companyName.toUpperCase() : "FINFLOW", 15, 20);
             
             doc.setFont("helvetica", "normal");
             doc.setFontSize(10);
@@ -174,7 +175,7 @@ function exportCustomerProfilePDF(customerId) {
             doc.setFont("helvetica", "italic");
             doc.setFontSize(7);
             doc.setTextColor(156, 163, 175);
-            doc.text("This document is a computer-generated KYC profile of Kishore Finance. Secure encrypted copy.", 15, 285);
+            doc.text(`This document is a computer-generated KYC profile of ${g_settings.companyName || "FinFlow"}. Secure encrypted copy.`, 15, 285);
 
             // Save PDF
             doc.save(`Borrower_Profile_${customer.id}.pdf`);
@@ -204,7 +205,7 @@ function exportCustomerLedgerPDF(customerId) {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
-    doc.text("KISHORE FINANCE", 15, 18);
+    doc.text((g_settings && g_settings.companyName) ? g_settings.companyName.toUpperCase() : "FINFLOW", 15, 18);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
@@ -498,7 +499,7 @@ function exportReportsPDF(startStr, endStr) {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
-    doc.text("KISHORE FINANCE", 15, 18);
+    doc.text((g_settings && g_settings.companyName) ? g_settings.companyName.toUpperCase() : "FINFLOW", 15, 18);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
@@ -778,7 +779,7 @@ function exportReportsPDF(startStr, endStr) {
     doc.setTextColor(156, 163, 175);
     doc.text("This official report is computer-generated. System validated copy.", 15, 285);
 
-    doc.save(`KishoreFinance_Report_${startStr}_to_${endStr}.pdf`);
+    doc.save(`FinFlow_Report_${startStr}_to_${endStr}.pdf`);
 }
 
 // PDF Exporter for a Single Loan Account statement
@@ -801,7 +802,7 @@ function exportSingleLoanPDF(loanId) {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
-    doc.text("KISHORE FINANCE", 15, 18);
+    doc.text((g_settings && g_settings.companyName) ? g_settings.companyName.toUpperCase() : "FINFLOW", 15, 18);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
@@ -1025,7 +1026,7 @@ function exportDailyCollectionsPDF(startStr, endStr) {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
-    doc.text("KISHORE FINANCE", 15, 18);
+    doc.text((g_settings && g_settings.companyName) ? g_settings.companyName.toUpperCase() : "FINFLOW", 15, 18);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
@@ -1128,7 +1129,7 @@ function exportDailyCollectionsPDF(startStr, endStr) {
     doc.setTextColor(156, 163, 175);
     doc.text("This official daily collections register is computer-generated. System validated copy.", 15, 285);
 
-    doc.save(`KishoreFinance_DailyCollections_${startStr}_to_${endStr}.pdf`);
+    doc.save(`FinFlow_DailyCollections_${startStr}_to_${endStr}.pdf`);
 }
 
 // 2. Export Operations Register PDF
@@ -1179,7 +1180,7 @@ function exportOperationsPDF(startStr, endStr) {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
-    doc.text("KISHORE FINANCE", 15, 18);
+    doc.text((g_settings && g_settings.companyName) ? g_settings.companyName.toUpperCase() : "FINFLOW", 15, 18);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
@@ -1292,7 +1293,7 @@ function exportOperationsPDF(startStr, endStr) {
     doc.setTextColor(156, 163, 175);
     doc.text("This official operations register is computer-generated. System validated copy.", 15, 285);
 
-    doc.save(`KishoreFinance_OperationsRegister_${startStr}_to_${endStr}.pdf`);
+    doc.save(`FinFlow_OperationsRegister_${startStr}_to_${endStr}.pdf`);
 }
 
 // 3. Export Unpaid Collections Register PDF
@@ -1330,7 +1331,7 @@ function exportUnpaidCollectionsPDF(startStr, endStr) {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
-    doc.text("KISHORE FINANCE", 15, 18);
+    doc.text((g_settings && g_settings.companyName) ? g_settings.companyName.toUpperCase() : "FINFLOW", 15, 18);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
@@ -1433,7 +1434,7 @@ function exportUnpaidCollectionsPDF(startStr, endStr) {
     doc.setTextColor(156, 163, 175);
     doc.text("This official unpaid collections register is computer-generated. System validated copy.", 15, 285);
 
-    doc.save(`KishoreFinance_UnpaidCollections_${startStr}_to_${endStr}.pdf`);
+    doc.save(`FinFlow_UnpaidCollections_${startStr}_to_${endStr}.pdf`);
 }
 
 window.exportReportsPDF = exportReportsPDF;

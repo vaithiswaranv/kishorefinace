@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kishore Finance - Comprehensive Management System</title>
+    <title>FinFlow - Simplify Finance. Streamline Business</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="icons/favicon.png">
     <!-- Google Fonts: Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,6 +20,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- Firebase SDK (v10.8.0 Compat) for Real-Time Multi-Device Sync -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <!-- Custom Style Sheet -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -28,10 +34,10 @@
         <div class="login-card">
             <div class="login-header">
                 <div class="logo-wrapper">
-                    <i class="fa-solid fa-building-columns"></i>
+                    <img src="icons/finflow_icon.png" alt="FinFlow Logo" class="login-logo-img">
                 </div>
-                <h2>Kishore Finance</h2>
-                <p id="login-card-subtitle">Secure Access Portal</p>
+                <h2>FinFlow</h2>
+                <p id="login-card-subtitle">Simplify Finance. Streamline Business</p>
             </div>
 
             <!-- Panel: Password Login -->
@@ -56,7 +62,7 @@
             </div>
 
             <div class="login-footer">
-                <p>&copy; 2026 Kishore Finance. Secure Terminal.</p>
+                <p>&copy; 2026 FinFlow. Simplify Finance. Streamline Business.</p>
             </div>
         </div>
     </div>
@@ -68,69 +74,75 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo-box">
-                    <i class="fa-solid fa-building-columns text-gradient"></i>
+                    <img src="icons/finflow_icon.png" alt="FinFlow Logo" class="sidebar-logo-img">
                 </div>
                 <div class="brand-details">
-                    <h1>Kishore Finance</h1>
-                    <span class="badge badge-online">Secure System</span>
+                    <h1 id="sidebar-brand-title">FinFlow</h1>
+                    <div class="sidebar-tagline-wrapper">
+                        <span class="sidebar-tagline" id="sidebar-tagline">Simplify Finance. Streamline Business</span>
+                    </div>
                 </div>
             </div>
 
             <nav class="sidebar-menu">
-                <ul>
+                <ul class="nav-list">
                     <li class="menu-item active" data-target="dashboard">
-                        <a href="#dashboard">
-                            <i class="fa-solid fa-chart-pie"></i>
-                            <span>Dashboard</span>
+                        <a href="#dashboard" class="menu-link" title="Dashboard Home">
+                            <i class="fa-solid fa-house"></i>
+                            <span>Home</span>
                         </a>
                     </li>
                     <li class="menu-item" data-target="customers">
-                        <a href="#customers">
+                        <a href="#customers" class="menu-link" title="Customer Profiles & KYC">
                             <i class="fa-solid fa-users"></i>
-                            <span>Customers</span>
+                            <span>Customer</span>
                         </a>
                     </li>
                     <li class="menu-item" data-target="loans">
-                        <a href="#loans">
+                        <a href="#loans" class="menu-link" title="Loan Accounts & Ledgers">
                             <i class="fa-solid fa-hand-holding-dollar"></i>
-                            <span>Loan Accounts</span>
+                            <span>Loan Account</span>
                         </a>
                     </li>
                     <li class="menu-item" data-target="collections">
-                        <a href="#collections">
+                        <a href="#collections" class="menu-link" title="Daily Collections & Receipts">
                             <i class="fa-solid fa-receipt"></i>
-                            <span>Collections</span>
+                            <span>Collection</span>
                         </a>
                     </li>
                     <li class="menu-item" data-target="reports">
-                        <a href="#reports">
+                        <a href="#reports" class="menu-link" title="Financial Statements & PDF Reports">
                             <i class="fa-solid fa-file-invoice-dollar"></i>
-                            <span>Reports</span>
+                            <span>Report</span>
                         </a>
                     </li>
-                    <li class="menu-item" data-target="settings">
-                        <a href="#settings">
-                            <i class="fa-solid fa-gears"></i>
-                            <span>Settings</span>
-                        </a>
+                    <li class="menu-item has-submenu" data-target="settings">
+                        <div class="menu-item-head">
+                            <a href="#settings" class="menu-link menu-link-parent" title="System Settings">
+                                <i class="fa-solid fa-gear"></i>
+                                <span>Settings</span>
+                            </a>
+                            <button type="button" class="submenu-toggle-btn" id="btn-toggle-settings-sub" title="Toggle Settings Menu" aria-label="Toggle Settings Menu">
+                                <i class="fa-solid fa-chevron-down submenu-chevron"></i>
+                            </button>
+                        </div>
+                        <ul class="submenu" id="settings-submenu">
+                            <li class="submenu-item active-sub" data-target="settings">
+                                <a href="#settings" class="submenu-link">
+                                    <i class="fa-solid fa-sliders"></i>
+                                    <span>Configurations</span>
+                                </a>
+                            </li>
+                            <li class="submenu-item nested-logout-item">
+                                <a href="#logout" class="submenu-link submenu-logout-link" id="btn-nested-logout" title="Log Out Account">
+                                    <i class="fa-solid fa-right-from-bracket"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                 </ul>
             </nav>
-
-            <div class="sidebar-footer">
-                <div class="user-profile-summary">
-                    <div class="user-avatar">
-                        <i class="fa-solid fa-user-tie"></i>
-                    </div>
-                    <div class="user-info">
-                        <h4 id="display-admin-name">Admin User</h4>
-                        <p>Super Administrator</p>
-                    </div>
-                </div>
-                <button id="btn-logout" class="btn-logout-sidebar" title="Log Out Account">
-                    <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
-                </button>
-            </div>
         </aside>
 
         <!-- MAIN MAIN PANEL -->
@@ -141,9 +153,10 @@
                     <button class="btn-toggle-sidebar" id="sidebar-toggle-btn">
                         <i class="fa-solid fa-bars"></i>
                     </button>
-                    <h2 class="header-title" id="page-title-heading">Dashboard Overview</h2>
+                    <h2 class="header-title" id="page-title-heading">Home Overview</h2>
                 </div>
                 <div class="header-right">
+                    <div id="cloud-sync-status-badge"></div>
                     <div class="date-time-widget">
                         <i class="fa-solid fa-calendar-days"></i>
                         <span id="current-dateTime">Aug 18, 2026 23:06:19 PM</span>
@@ -260,26 +273,26 @@
                         </div>
 
                         <!-- 8. Total Profit -->
-                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('reports')" title="Formula: Processing Fee + Total Payable Cost - Handover">
+                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('reports')" title="Formula: Total Payable Cost - Handover Cost">
                             <div class="kpi-icon icon-emerald">
                                 <i class="fa-solid fa-sack-dollar"></i>
                             </div>
                             <div class="kpi-info">
                                 <h3>Total Profit</h3>
                                 <span class="kpi-val text-emerald" id="kpi-total-profit">₹0.00</span>
-                                <span class="kpi-trend trend-up" id="kpi-total-profit-sub" style="font-size: 10px;" title="Processing Fee + Total Payable - Handover"><i class="fa-solid fa-calculator"></i> Fee + Total - Handover</span>
+                                <span class="kpi-trend trend-up" id="kpi-total-profit-sub" style="font-size: 10px;" title="Total Payable - Handover"><i class="fa-solid fa-calculator"></i> Total - Handover</span>
                             </div>
                         </div>
 
                         <!-- 9. Collection Profit -->
-                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('reports')" title="Procedure: Upfront Processing Fee entered first + (Amount Collected - Handover Cost) added after full payment is made">
+                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('reports')" title="Profit from Settled Loans: Amount Collected - Handover Cost">
                             <div class="kpi-icon icon-teal">
                                 <i class="fa-solid fa-coins"></i>
                             </div>
                             <div class="kpi-info">
                                 <h3>Collection Profit</h3>
                                 <span class="kpi-val text-teal" id="kpi-collection-profit">₹0.00</span>
-                                <span class="kpi-trend trend-up" id="kpi-collection-profit-sub" style="font-size: 10px;" title="Upfront Fees + Profit beyond Handover Cost on Completed Loans"><i class="fa-solid fa-receipt"></i> Upfront Fees Collected</span>
+                                <span class="kpi-trend trend-up" id="kpi-collection-profit-sub" style="font-size: 10px;" title="Profit on Settled Loans"><i class="fa-solid fa-circle-check"></i> 0 Settled Loans</span>
                             </div>
                         </div>
                     </div>
@@ -555,9 +568,8 @@
                 <!-- ==================== REPORTS SECTION ==================== -->
                 <section id="reports" class="app-section">
                     <!-- Filters Toolbar -->
-                    <!-- Filters Toolbar -->
-                    <div class="toolbar-row glass flex-wrap" style="gap: 15px; padding: 15px; align-items: flex-end;">
-                        <div class="date-filter-group" style="display: flex; gap: 12px; flex-wrap: wrap; flex: 1;">
+                    <div class="toolbar-row glass flex-wrap report-toolbar">
+                        <div class="date-filter-group">
                             <div class="date-input">
                                 <label for="report-start-date">From:</label>
                                 <input type="date" id="report-start-date">
@@ -566,13 +578,13 @@
                                 <label for="report-end-date">To:</label>
                                 <input type="date" id="report-end-date">
                             </div>
-                            <div class="date-input" style="min-width: 180px;">
+                            <div class="date-input search-input-col">
                                 <label for="report-search-query">Search Client / Loan:</label>
-                                <input type="text" id="report-search-query" placeholder="Name, ID, Loan ID..." style="width: 100%; border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; background: rgba(0,0,0,0.2); color: #fff; font-size: 13px;">
+                                <input type="text" id="report-search-query" placeholder="Name, ID, Loan ID...">
                             </div>
                             <div class="date-input">
                                 <label for="report-filter-mode">Payment Mode:</label>
-                                <select id="report-filter-mode" style="border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; background: rgba(0,0,0,0.2); color: #fff; font-size: 13px; min-width: 110px;">
+                                <select id="report-filter-mode">
                                     <option value="All">All Modes</option>
                                     <option value="Cash">Cash</option>
                                     <option value="UPI">UPI / GPay</option>
@@ -582,18 +594,20 @@
                             </div>
                             <div class="date-input">
                                 <label for="report-filter-status">Payment Status:</label>
-                                <select id="report-filter-status" style="border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; background: rgba(0,0,0,0.2); color: #fff; font-size: 13px; min-width: 125px;">
+                                <select id="report-filter-status">
                                     <option value="All">All Statuses</option>
                                     <option value="Paid">Paid (Collections)</option>
                                     <option value="Pending">Pending (Schedules)</option>
                                     <option value="Overdue">Overdue (Past Dues)</option>
                                 </select>
                             </div>
-                            <button class="btn btn-secondary" id="btn-apply-report-filter" style="height: 33px; margin-top: 19px;">
-                                <i class="fa-solid fa-filter"></i> Apply
-                            </button>
+                            <div class="date-input btn-apply-wrapper">
+                                <button class="btn btn-secondary" id="btn-apply-report-filter">
+                                    <i class="fa-solid fa-filter"></i> Apply
+                                </button>
+                            </div>
                         </div>
-                        <div class="export-actions" style="margin-top: 10px;">
+                        <div class="export-actions">
                             <button class="btn btn-gradient btn-sm" id="btn-report-export-pdf">
                                 <i class="fa-solid fa-file-pdf"></i> Export PDF
                             </button>
@@ -731,14 +745,18 @@
                                 <div class="form-row">
                                     <div class="form-group flex-2">
                                         <label for="set-company-name">Company Name</label>
-                                        <input type="text" id="set-company-name" value="Kishore Finance" required>
+                                        <input type="text" id="set-company-name" value="FinFlow" required>
                                     </div>
+                                    <div class="form-group flex-2">
+                                        <label for="set-company-tagline">Tagline</label>
+                                        <input type="text" id="set-company-tagline" value="Simplify Finance. Streamline Business">
+                                    </div>
+                                </div>
+                                <div class="form-row">
                                     <div class="form-group flex-1">
                                         <label for="set-company-mobile">Company Mobile</label>
                                         <input type="tel" id="set-company-mobile" value="9988776655" required pattern="^[0-9]{10}$">
                                     </div>
-                                </div>
-                                <div class="form-row">
                                     <div class="form-group flex-1">
                                         <label for="set-currency">Currency Symbol</label>
                                         <input type="text" id="set-currency" value="₹" required>
@@ -778,6 +796,77 @@
                                 <div class="success-message" id="settings-pass-success"></div>
                                 <button type="submit" class="btn btn-primary">Update Security Profile</button>
                             </form>
+                        </div>
+
+                        <!-- Cloud Database & Multi-Device Real-Time Sync -->
+                        <div class="settings-card glass card-padding" style="grid-column: 1 / -1;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <div>
+                                    <h3 style="margin: 0;"><i class="fa-solid fa-cloud-arrow-up text-cyan"></i> Cloud Database & Real-Time Multi-Device Sync</h3>
+                                    <p class="text-muted" style="font-size: 12px; margin-top: 4px; margin-bottom: 0;">
+                                        Connect Firebase Firestore to instantly synchronize customers, loans, and collections across multiple mobile phones & computers in real time.
+                                    </p>
+                                </div>
+                                <div id="cloud-sync-status-indicator"></div>
+                            </div>
+
+                            <form id="settings-cloud-sync-form" class="margin-top">
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
+                                        <label for="cloud-sync-project-id"><i class="fa-solid fa-folder-tree"></i> Project ID <span class="required">*</span></label>
+                                        <input type="text" id="cloud-sync-project-id" placeholder="e.g. finflow-production" required>
+                                    </div>
+                                    <div class="form-group flex-2">
+                                        <label for="cloud-sync-api-key"><i class="fa-solid fa-key"></i> Web API Key <span class="required">*</span></label>
+                                        <input type="password" id="cloud-sync-api-key" placeholder="AIzaSy..." required>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
+                                        <label for="cloud-sync-auth-domain"><i class="fa-solid fa-globe"></i> Auth Domain</label>
+                                        <input type="text" id="cloud-sync-auth-domain" placeholder="e.g. finflow-production.firebaseapp.com">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="cloud-sync-storage-bucket"><i class="fa-solid fa-bucket"></i> Storage Bucket</label>
+                                        <input type="text" id="cloud-sync-storage-bucket" placeholder="e.g. finflow-production.appspot.com">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="cloud-sync-app-id"><i class="fa-solid fa-mobile-screen"></i> App ID</label>
+                                        <input type="text" id="cloud-sync-app-id" placeholder="1:123456789:web:abcdef">
+                                    </div>
+                                </div>
+
+                                <div id="cloud-sync-feedback" class="margin-top-sm" style="display: none;"></div>
+
+                                <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                                    <button type="button" class="btn btn-secondary" id="btn-cloud-test-connection">
+                                        <i class="fa-solid fa-bolt text-amber"></i> Test Connection
+                                    </button>
+                                    <button type="submit" class="btn btn-primary" id="btn-cloud-save-config">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i> Save & Connect Cloud
+                                    </button>
+                                    <button type="button" class="btn btn-gradient" id="btn-cloud-sync-all" title="Upload all existing local customers, loans, and collections to the cloud database" style="background: linear-gradient(135deg, #06b6d4, #3b82f6);">
+                                        <i class="fa-solid fa-arrows-rotate"></i> Push All Local Data to Cloud
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-cloud-guide" style="margin-left: auto;">
+                                        <i class="fa-solid fa-circle-question text-cyan"></i> Setup Guide (Free Forever)
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!-- Setup Instructions Accordion -->
+                            <div id="cloud-setup-guide" class="glass margin-top" style="display: none; padding: 15px; border-radius: 8px; border: 1px dashed rgba(6, 182, 212, 0.4); background: rgba(6, 182, 212, 0.04); font-size: 12px; line-height: 1.6;">
+                                <h4 style="color: var(--clr-cyan); margin-bottom: 8px;"><i class="fa-solid fa-circle-info"></i> How to Get Free Firebase Cloud Database Credentials (3 Minutes):</h4>
+                                <ol style="padding-left: 20px; margin: 0; color: var(--text-secondary);">
+                                    <li>Go to <a href="https://console.firebase.google.com" target="_blank" style="color: var(--clr-cyan); text-decoration: underline;">console.firebase.google.com</a> with any Google account (100% Free Spark plan).</li>
+                                    <li>Click <strong>"Add Project"</strong> &rarr; name it <code>finflow</code> (disable Google Analytics if asked).</li>
+                                    <li>Click <strong>"Build" &rarr; "Firestore Database" &rarr; "Create Database"</strong> &rarr; choose your region (e.g. <code>asia-south1 (Mumbai)</code> or default) &rarr; select <strong>"Start in test mode"</strong>.</li>
+                                    <li>Go to <strong>Project Settings (⚙️ icon top-left) &rarr; General tab &rarr; "Your Apps"</strong> &rarr; click Web (<code>&lt;/&gt;</code>) icon &rarr; register app.</li>
+                                    <li>Copy the <code>apiKey</code>, <code>projectId</code>, <code>authDomain</code>, <code>storageBucket</code>, and <code>appId</code> values into the fields above, then click <strong>"Save & Connect Cloud"</strong>.</li>
+                                    <li>Enter these same credentials on all your phones & devices. Any customer added or loan opened on Phone 1 will immediately reflect on Phone 2!</li>
+                                </ol>
+                            </div>
                         </div>
 
                         <!-- Data Management & Fresh Start Controls -->
@@ -1451,6 +1540,7 @@
         </div>
     </div>
 
+    <script src="js/cloud_sync.js?v=63"></script>
     <script src="js/data.js?v=63"></script>
     <script src="js/sms.js?v=63"></script>
     <script src="js/pdf.js?v=63"></script>

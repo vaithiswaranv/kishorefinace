@@ -1,5 +1,6 @@
 /* ==========================================================================
-   Kishore Finance App Controller - js/app.js
+   FinFlow App Controller - js/app.js
+   Simplify Finance. Streamline Business
    ========================================================================== */
 
 // Global Chart variables
@@ -100,12 +101,49 @@ document.addEventListener("DOMContentLoaded", () => {
     initLoans();
     initCollections();
     initReports();
+    updateBrandDisplay();
+
+    // Initialize Cloud Real-Time Multi-Device Sync
+    if (window.CloudSync && typeof window.CloudSync.init === "function") {
+        window.CloudSync.init();
+    }
+
+    // Listen for live updates pushed from other devices
+    window.addEventListener("finflow:cloud-update", (e) => {
+        console.log("Real-time cloud database update received:", e.detail);
+        try {
+            renderDashboard();
+            renderCustomersList();
+            renderLoansList();
+            renderCollectionsToday();
+            renderReports();
+            updateBrandDisplay();
+        } catch (err) {
+            console.warn("View re-render on cloud update caught error:", err);
+        }
+    });
     
     // Quick pay button routing
     document.getElementById("btn-quick-new-collection").addEventListener("click", () => {
         switchModule("collections");
     });
 });
+
+// Dynamic Branding Updater
+function updateBrandDisplay() {
+    const compName = (g_settings && g_settings.companyName) ? g_settings.companyName : "FinFlow";
+    const compTagline = (g_settings && g_settings.companyTagline) ? g_settings.companyTagline : "Simplify Finance. Streamline Business";
+    
+    const sidebarTitle = document.getElementById("sidebar-brand-title");
+    if (sidebarTitle) sidebarTitle.textContent = compName;
+    const sidebarTag = document.getElementById("sidebar-tagline");
+    if (sidebarTag) sidebarTag.textContent = compTagline;
+    
+    const loginSub = document.getElementById("login-card-subtitle");
+    if (loginSub && !loginSub.dataset.custom) loginSub.textContent = compTagline;
+
+    document.title = `${compName} - ${compTagline}`;
+}
 
 // Update Date-Time Clock
 function updateDateTime() {
@@ -130,24 +168,62 @@ function initRouter() {
     const menuItems = document.querySelectorAll(".menu-item");
     const sidebar = document.querySelector(".sidebar");
     const sidebarToggle = document.getElementById("sidebar-toggle-btn");
+    const settingsSubmenuBtn = document.getElementById("btn-toggle-settings-sub");
+    const nestedLogoutBtn = document.getElementById("btn-nested-logout");
+    const hasSubmenuItem = document.querySelector(".menu-item.has-submenu");
 
+    // Regular menu link clicks
     menuItems.forEach(item => {
-        item.addEventListener("click", (e) => {
+        const link = item.querySelector("a.menu-link");
+        if (link) {
+            link.addEventListener("click", (e) => {
+                e.preventDefault();
+                const target = item.getAttribute("data-target");
+
+                // Toggle submenu if settings item
+                if (item.classList.contains("has-submenu")) {
+                    item.classList.toggle("open");
+                } else if (hasSubmenuItem && hasSubmenuItem.classList.contains("open") && target !== "settings") {
+                    hasSubmenuItem.classList.remove("open");
+                }
+
+                // Remove active classes
+                menuItems.forEach(i => i.classList.remove("active"));
+                item.classList.add("active");
+
+                if (target) {
+                    switchModule(target);
+                }
+
+                // Close mobile sidebar if open
+                if (sidebar && sidebar.classList.contains("active")) {
+                    sidebar.classList.remove("active");
+                }
+            });
+        }
+    });
+
+    // Submenu Toggle Button
+    if (settingsSubmenuBtn && hasSubmenuItem) {
+        settingsSubmenuBtn.addEventListener("click", (e) => {
             e.preventDefault();
-            const target = item.getAttribute("data-target");
-            
-            // Remove active classes
-            menuItems.forEach(i => i.classList.remove("active"));
-            item.classList.add("active");
+            e.stopPropagation();
+            hasSubmenuItem.classList.toggle("open");
+        });
+    }
 
-            switchModule(target);
-
-            // Close mobile sidebar if open
-            if (sidebar.classList.contains("active")) {
-                sidebar.classList.remove("active");
+    // Nested Logout Link
+    if (nestedLogoutBtn) {
+        nestedLogoutBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (confirm("Are you sure you want to log out of FinFlow?")) {
+                sessionStorage.removeItem("kf_logged_in");
+                sessionStorage.removeItem("kf_current_user");
+                showLoginOverlay();
             }
         });
-    });
+    }
 
     // Mobile sidebar toggle click
     if (sidebarToggle) {
@@ -199,10 +275,28 @@ function switchModule(moduleName) {
         targetSection.classList.add("active");
     }
 
+    // Sync active class on sidebar menu items
+    const menuItems = document.querySelectorAll(".menu-item");
+    menuItems.forEach(i => {
+        if (i.getAttribute("data-target") === moduleName) {
+            i.classList.add("active");
+        } else {
+            i.classList.remove("active");
+        }
+    });
+
     // Update main header title
     const heading = document.getElementById("page-title-heading");
     if (heading) {
-        heading.textContent = moduleName.charAt(0).toUpperCase() + moduleName.slice(1) + " Overview";
+        const titleMap = {
+            dashboard: "Home Overview",
+            customers: "Customers & KYC Overview",
+            loans: "Loan Accounts & Ledgers",
+            collections: "Daily Collections & Receipts",
+            reports: "Financial Statements & Reports",
+            settings: "System Settings & Configuration"
+        };
+        heading.textContent = titleMap[moduleName] || (moduleName.charAt(0).toUpperCase() + moduleName.slice(1) + " Overview");
     }
 
     // Refresh view specific data
@@ -545,23 +639,21 @@ function renderDashboard() {
     const elHandoverSub = document.getElementById("kpi-total-handover-sub");
     if (elHandoverSub) elHandoverSub.innerHTML = `<i class="fa-solid fa-money-bill-transfer"></i> Net Handed Over`;
 
-    // Total Profit (Formula: Processing Fee + Total Payable Cost - Handover)
+    // Total Profit (Formula: Total Payable Cost - Handover)
     const elProfit = document.getElementById("kpi-total-profit");
     if (elProfit) elProfit.textContent = g_settings.currency + kpis.totalProfit.toLocaleString();
     const elProfitSub = document.getElementById("kpi-total-profit-sub");
-    if (elProfitSub) elProfitSub.innerHTML = `<i class="fa-solid fa-calculator"></i> Fee + Total - Handover`;
+    if (elProfitSub) elProfitSub.innerHTML = `<i class="fa-solid fa-calculator"></i> Total - Handover`;
 
-    // Collection Profit (Formula: Upfront Processing Fee + Collections beyond Handover Cost)
+    // Collection Profit (Formula: Settled Loans Profit)
     const elColProfit = document.getElementById("kpi-collection-profit");
     if (elColProfit) elColProfit.textContent = g_settings.currency + kpis.collectionProfit.toLocaleString();
     const elColProfitSub = document.getElementById("kpi-collection-profit-sub");
     if (elColProfitSub) {
         if (kpis.completedLoansCount > 0) {
-            elColProfitSub.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${kpis.completedLoansCount} Settled Loan${kpis.completedLoansCount > 1 ? 's' : ''} + Fees`;
-        } else if (kpis.collectionProfit > kpis.totalProcessingFees) {
-            elColProfitSub.innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i> Fees + Collections Profit`;
+            elColProfitSub.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${kpis.completedLoansCount} Settled Loan${kpis.completedLoansCount > 1 ? 's' : ''}`;
         } else {
-            elColProfitSub.innerHTML = `<i class="fa-solid fa-receipt"></i> Upfront Fees Collected`;
+            elColProfitSub.innerHTML = `<i class="fa-solid fa-circle-check"></i> 0 Settled Loans`;
         }
     }
 
@@ -2602,7 +2694,7 @@ function exportReportsCSV() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `KishoreFinance_Report_${startStr}_to_${endStr}.csv`);
+    link.setAttribute("download", `FinFlow_Report_${startStr}_to_${endStr}.csv`);
     document.body.appendChild(link); // Required for FF
     link.click();
     document.body.removeChild(link);
@@ -2616,7 +2708,9 @@ function initSettings() {
 
     // Populate values
     if (sysForm) {
-        document.getElementById("set-company-name").value = g_settings.companyName;
+        document.getElementById("set-company-name").value = g_settings.companyName || "FinFlow";
+        const tagEl = document.getElementById("set-company-tagline");
+        if (tagEl) tagEl.value = g_settings.companyTagline || "Simplify Finance. Streamline Business";
         document.getElementById("set-company-mobile").value = g_settings.companyMobile || "";
         document.getElementById("set-currency").value = g_settings.currency;
         const addressEl = document.getElementById("set-company-address");
@@ -2637,7 +2731,11 @@ function initSettings() {
     if (sysForm) {
         sysForm.addEventListener("submit", (e) => {
             e.preventDefault();
-            g_settings.companyName = document.getElementById("set-company-name").value.trim();
+            g_settings.companyName = document.getElementById("set-company-name").value.trim() || "FinFlow";
+            const tagEl = document.getElementById("set-company-tagline");
+            if (tagEl) {
+                g_settings.companyTagline = tagEl.value.trim() || "Simplify Finance. Streamline Business";
+            }
             g_settings.companyMobile = document.getElementById("set-company-mobile").value.trim();
             g_settings.currency = document.getElementById("set-currency").value.trim();
             const addressEl = document.getElementById("set-company-address");
@@ -2654,6 +2752,7 @@ function initSettings() {
             }
 
             saveToLocalStorage();
+            updateBrandDisplay();
             alert("General company settings updated successfully.");
             renderDashboard();
         });
@@ -2750,6 +2849,124 @@ function initSettings() {
         });
     }
 
+    // Cloud Database & Multi-Device Real-Time Sync Handlers
+    const cloudForm = document.getElementById("settings-cloud-sync-form");
+    const cloudTestBtn = document.getElementById("btn-cloud-test-connection");
+    const cloudSyncAllBtn = document.getElementById("btn-cloud-sync-all");
+    const cloudGuideBtn = document.getElementById("btn-toggle-cloud-guide");
+    const cloudGuideDiv = document.getElementById("cloud-setup-guide");
+    const cloudFeedback = document.getElementById("cloud-sync-feedback");
+
+    if (window.CloudSync) {
+        const savedCfg = window.CloudSync.getConfig();
+        if (savedCfg) {
+            if (document.getElementById("cloud-sync-project-id")) document.getElementById("cloud-sync-project-id").value = savedCfg.projectId || "";
+            if (document.getElementById("cloud-sync-api-key")) document.getElementById("cloud-sync-api-key").value = savedCfg.apiKey || "";
+            if (document.getElementById("cloud-sync-auth-domain")) document.getElementById("cloud-sync-auth-domain").value = savedCfg.authDomain || "";
+            if (document.getElementById("cloud-sync-storage-bucket")) document.getElementById("cloud-sync-storage-bucket").value = savedCfg.storageBucket || "";
+            if (document.getElementById("cloud-sync-app-id")) document.getElementById("cloud-sync-app-id").value = savedCfg.appId || "";
+        }
+    }
+
+    if (cloudGuideBtn && cloudGuideDiv) {
+        cloudGuideBtn.addEventListener("click", () => {
+            cloudGuideDiv.style.display = cloudGuideDiv.style.display === "none" ? "block" : "none";
+        });
+    }
+
+    function showCloudFeedback(message, isSuccess = true) {
+        if (!cloudFeedback) return;
+        cloudFeedback.style.display = "block";
+        cloudFeedback.className = isSuccess ? "cloud-feedback-box cloud-feedback-success" : "cloud-feedback-box cloud-feedback-error";
+        cloudFeedback.innerHTML = `<i class="fa-solid ${isSuccess ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> <span>${message}</span>`;
+    }
+
+    if (cloudTestBtn) {
+        cloudTestBtn.addEventListener("click", async () => {
+            const config = {
+                projectId: document.getElementById("cloud-sync-project-id").value.trim(),
+                apiKey: document.getElementById("cloud-sync-api-key").value.trim(),
+                authDomain: document.getElementById("cloud-sync-auth-domain").value.trim() || `${document.getElementById("cloud-sync-project-id").value.trim()}.firebaseapp.com`,
+                storageBucket: document.getElementById("cloud-sync-storage-bucket").value.trim() || `${document.getElementById("cloud-sync-project-id").value.trim()}.appspot.com`,
+                appId: document.getElementById("cloud-sync-app-id").value.trim() || ""
+            };
+
+            if (!config.projectId || !config.apiKey) {
+                showCloudFeedback("Please enter both Project ID and Web API Key before testing.", false);
+                return;
+            }
+
+            cloudTestBtn.disabled = true;
+            cloudTestBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Testing...`;
+
+            try {
+                const res = await window.CloudSync.testConnection(config);
+                showCloudFeedback(res.message || "Connection successful! Firestore database is accessible.", true);
+            } catch (err) {
+                showCloudFeedback(err.message || "Failed to connect to Firebase Firestore.", false);
+            } finally {
+                cloudTestBtn.disabled = false;
+                cloudTestBtn.innerHTML = `<i class="fa-solid fa-bolt text-amber"></i> Test Connection`;
+            }
+        });
+    }
+
+    if (cloudForm) {
+        cloudForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const config = {
+                projectId: document.getElementById("cloud-sync-project-id").value.trim(),
+                apiKey: document.getElementById("cloud-sync-api-key").value.trim(),
+                authDomain: document.getElementById("cloud-sync-auth-domain").value.trim() || `${document.getElementById("cloud-sync-project-id").value.trim()}.firebaseapp.com`,
+                storageBucket: document.getElementById("cloud-sync-storage-bucket").value.trim() || `${document.getElementById("cloud-sync-project-id").value.trim()}.appspot.com`,
+                appId: document.getElementById("cloud-sync-app-id").value.trim() || ""
+            };
+
+            const submitBtn = document.getElementById("btn-cloud-save-config");
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Connecting...`;
+            }
+
+            try {
+                const success = await window.CloudSync.saveConfig(config);
+                if (success) {
+                    showCloudFeedback("Cloud credentials saved and live multi-device sync connected successfully!", true);
+                } else {
+                    showCloudFeedback("Credentials saved. Operating with cloud connection.", true);
+                }
+            } catch (err) {
+                showCloudFeedback("Failed to save and connect: " + err.message, false);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Save & Connect Cloud`;
+                }
+            }
+        });
+    }
+
+    if (cloudSyncAllBtn) {
+        cloudSyncAllBtn.addEventListener("click", async () => {
+            if (!confirm("Push all local customers, loans, and collections to the cloud database?\n\nThis will synchronize all local records with Firestore so other devices can access them.")) {
+                return;
+            }
+
+            cloudSyncAllBtn.disabled = true;
+            cloudSyncAllBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Syncing to Cloud...`;
+
+            try {
+                const res = await window.CloudSync.syncAllLocalToCloud();
+                showCloudFeedback(`Successfully pushed ${res.count} records to the cloud! All connected devices will now see this data.`, true);
+            } catch (err) {
+                showCloudFeedback("Upload failed: " + err.message, false);
+            } finally {
+                cloudSyncAllBtn.disabled = false;
+                cloudSyncAllBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> Push All Local Data to Cloud`;
+            }
+        });
+    }
+
     // Data Management: Reset All Business Data (Fresh Start)
     const resetAllBtn = document.getElementById("btn-reset-all-data");
     if (resetAllBtn) {
@@ -2806,7 +3023,7 @@ function initSettings() {
             const a = document.createElement("a");
             const dateStr = new Date().toISOString().split('T')[0];
             a.href = url;
-            a.download = `kishore_finance_backup_${dateStr}.json`;
+            a.download = `finflow_backup_${dateStr}.json`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);

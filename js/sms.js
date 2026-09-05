@@ -1,5 +1,6 @@
 /* ==========================================================================
-   Kishore Finance SMS & Multi-Channel Dispatch Engine - js/sms.js
+   FinFlow SMS & Multi-Channel Dispatch Engine - js/sms.js
+   Simplify Finance. Streamline Business
    ========================================================================== */
 
 // Event listener to close the phone mockup UI
@@ -75,7 +76,7 @@ function compileSmsMessage(template, customer, tx, remainingBalance) {
         "{MODE}": (tx && tx.paymentMode) ? tx.paymentMode : "Cash",
         "{BALANCE}": currency + (typeof remainingBalance === "number" ? Number(remainingBalance).toLocaleString() : "0"),
         "{DATE}": (tx && tx.transactionDate) ? (typeof formatDateToDMY === "function" ? formatDateToDMY(tx.transactionDate) : tx.transactionDate) : new Date().toLocaleDateString(),
-        "{COMPANY}": (g_settings && g_settings.companyName) ? g_settings.companyName : "Kishore Finance",
+        "{COMPANY}": (g_settings && g_settings.companyName) ? g_settings.companyName : "FinFlow",
         "{COMPANY_MOBILE}": (g_settings && g_settings.companyMobile) ? g_settings.companyMobile : ""
     };
 
@@ -100,7 +101,7 @@ function compileDueReminderMessage(customer, loan, pendingAmount, dueDate, isOve
         "{STATUS}": isOverdue ? "OVERDUE" : "DUE",
         "{BALANCE}": currency + Number(outBal).toLocaleString(),
         "{DATE}": typeof formatDateToDMY === "function" ? formatDateToDMY(dueDate) : dueDate,
-        "{COMPANY}": g_settings.companyName || "Kishore Finance",
+        "{COMPANY}": g_settings.companyName || "FinFlow",
         "{COMPANY_MOBILE}": g_settings.companyMobile || ""
     };
 
@@ -256,9 +257,9 @@ function openSmsDispatchHub(params) {
     const contactPhone = document.querySelector(".contact-details .contact-info p");
     const contactAvatar = document.querySelector(".contact-details .contact-avatar");
 
-    if (contactName) contactName.textContent = g_settings.companyName || "Kishore Finance";
+    if (contactName) contactName.textContent = g_settings.companyName || "FinFlow";
     if (contactPhone) contactPhone.textContent = `From: +91 ${g_settings.companyMobile || '9988776655'}`;
-    if (contactAvatar) contactAvatar.innerHTML = `<i class="fa-solid fa-building-columns" style="color:var(--clr-cyan);"></i>`;
+    if (contactAvatar) contactAvatar.innerHTML = `<img src="icons/finflow_icon.png" style="width:24px;height:24px;object-fit:contain;">`;
 
     // Recipient banner
     const recipientBanner = document.createElement("div");
@@ -444,7 +445,7 @@ async function testSmsGateway(testMobile, testMessage) {
         return { success: false, message: "Please enter a valid 10-digit mobile number." };
     }
 
-    const msg = testMessage || `[Test SMS] Kishore Finance SMS Gateway verification for +91-${cleanMobile}. System active!`;
+    const msg = testMessage || `[Test SMS] FinFlow SMS Gateway verification for +91-${cleanMobile}. System active!`;
     const res = await sendSmsViaGateway(cleanMobile, msg);
     return res;
 }

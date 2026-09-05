@@ -1,5 +1,6 @@
 /* ==========================================================================
-   Kishore Finance Data Management Layer - js/data.js
+   FinFlow Data Management Layer - js/data.js
+   Simplify Finance. Streamline Business
    ========================================================================== */
 
 const SVG_PHOTO_MOCK = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%231e293b'/><circle cx='50' cy='35' r='18' fill='%236366f1'/><path d='M20 80c0-15 15-22 30-22s30 7 30 22z' fill='%236366f1'/></svg>`;
@@ -14,7 +15,8 @@ let g_users = [];
 
 // Default Initial Settings
 const DEFAULT_SETTINGS = {
-    companyName: "Kishore Finance",
+    companyName: "FinFlow",
+    companyTagline: "Simplify Finance. Streamline Business",
     companyMobile: "9988776655",
     companyAddress: "12, Finance Street, Chennai, Tamil Nadu",
     currency: "₹",
@@ -27,7 +29,7 @@ const DEFAULT_SETTINGS = {
 
 // Seeding Initial Data if localStorage is empty
 function seedDatabase(seedMockDemo = false) {
-    console.log("Initializing Kishore Finance database...");
+    console.log("Initializing FinFlow database...");
     
     // Seed Settings
     g_settings = { ...DEFAULT_SETTINGS };
@@ -91,7 +93,7 @@ function clearAllCustomers() {
 // Export database backup as JSON
 function exportDatabaseBackup() {
     const backup = {
-        appName: "Kishore Finance",
+        appName: "FinFlow",
         version: "2.0",
         exportDate: new Date().toISOString(),
         settings: g_settings,
@@ -142,7 +144,17 @@ function loadFromLocalStorage() {
     if (dataVersion !== "clean_v1") {
         console.log("First clean database initialization - wiping old demo records.");
         if (settings) {
-            try { g_settings = { ...DEFAULT_SETTINGS, ...JSON.parse(settings) }; } catch(e) { g_settings = { ...DEFAULT_SETTINGS }; }
+            try { 
+                g_settings = { ...DEFAULT_SETTINGS, ...JSON.parse(settings) }; 
+                if (!g_settings.companyName || g_settings.companyName === "Kishore Finance") {
+                    g_settings.companyName = "FinFlow";
+                }
+                if (!g_settings.companyTagline) {
+                    g_settings.companyTagline = "Simplify Finance. Streamline Business";
+                }
+            } catch(e) { 
+                g_settings = { ...DEFAULT_SETTINGS }; 
+            }
         } else {
             g_settings = { ...DEFAULT_SETTINGS };
         }
@@ -161,6 +173,12 @@ function loadFromLocalStorage() {
     if (settings && customers && loans && collections) {
         try {
             g_settings = { ...DEFAULT_SETTINGS, ...JSON.parse(settings) };
+            if (!g_settings.companyName || g_settings.companyName === "Kishore Finance") {
+                g_settings.companyName = "FinFlow";
+            }
+            if (!g_settings.companyTagline) {
+                g_settings.companyTagline = "Simplify Finance. Streamline Business";
+            }
             g_customers = JSON.parse(customers).map(c => {
                 // Auto-clean any double-quoted broken SVGs in existing local storage
                 if (c.photo && c.photo.includes('xmlns="http://www.w3.org/2000/svg"')) {
@@ -305,7 +323,7 @@ function getCustomerById(id) {
 }
 
 function addCustomer(cust) {
-    g_customers.unshift({
+    const newCust = {
         id: cust.id,
         name: cust.name,
         mobile: cust.mobile,
@@ -322,8 +340,12 @@ function addCustomer(cust) {
         aadhaar: cust.aadhaar || SVG_AADHAAR_MOCK,
         status: cust.status || "Active",
         createdDate: cust.createdDate || new Date().toISOString().split('T')[0]
-    });
+    };
+    g_customers.unshift(newCust);
     saveToLocalStorage();
+    if (window.CloudSync && typeof window.CloudSync.saveCustomer === "function") {
+        window.CloudSync.saveCustomer(newCust);
+    }
 }
 
 function updateCustomer(id, updatedCust) {
@@ -344,6 +366,9 @@ function updateCustomer(id, updatedCust) {
         c.aadhaar = updatedCust.aadhaar || c.aadhaar;
         c.status = updatedCust.status || c.status;
         saveToLocalStorage();
+        if (window.CloudSync && typeof window.CloudSync.saveCustomer === "function") {
+            window.CloudSync.saveCustomer(c);
+        }
     }
 }
 
@@ -353,6 +378,12 @@ function deleteCustomer(id) {
     g_loans = g_loans.filter(l => l.customerId !== id);
     g_collections = g_collections.filter(c => c.customerId !== id && !associatedLoanIds.includes(c.loanId));
     saveToLocalStorage();
+    if (window.CloudSync) {
+        if (typeof window.CloudSync.deleteCustomer === "function") window.CloudSync.deleteCustomer(id);
+        associatedLoanIds.forEach(lid => {
+            if (typeof window.CloudSync.deleteLoan === "function") window.CloudSync.deleteLoan(lid);
+        });
+    }
 }
 
 function updateCustomerStatus(id, status) {
@@ -360,6 +391,9 @@ function updateCustomerStatus(id, status) {
     if (c) {
         c.status = status;
         saveToLocalStorage();
+        if (window.CloudSync && typeof window.CloudSync.saveCustomer === "function") {
+            window.CloudSync.saveCustomer(c);
+        }
     }
 }
 
@@ -369,7 +403,7 @@ function getLoanById(id) {
 }
 
 function addLoan(loan) {
-    g_loans.unshift({
+    const newLoan = {
         id: loan.id,
         customerId: loan.customerId,
         category: loan.category,
@@ -388,7 +422,8 @@ function addLoan(loan) {
         durationDays: parseInt(loan.durationDays) || 100,
         schedule: loan.schedule || [],
         createdDate: new Date().toISOString().split('T')[0]
-    });
+    };
+    g_loans.unshift(newLoan);
     
     // If status mode is Auto, recalculate status based on financials
     const l = g_loans[0];
@@ -403,6 +438,9 @@ function addLoan(loan) {
     }
 
     saveToLocalStorage();
+    if (window.CloudSync && typeof window.CloudSync.saveLoan === "function") {
+        window.CloudSync.saveLoan(l);
+    }
 }
 
 function updateLoan(id, updatedLoan) {
@@ -439,6 +477,9 @@ function updateLoan(id, updatedLoan) {
         }
         
         saveToLocalStorage();
+        if (window.CloudSync && typeof window.CloudSync.saveLoan === "function") {
+            window.CloudSync.saveLoan(l);
+        }
     }
 }
 
@@ -446,6 +487,9 @@ function deleteLoan(id) {
     g_loans = g_loans.filter(l => l.id !== id);
     g_collections = g_collections.filter(c => c.loanId !== id);
     saveToLocalStorage();
+    if (window.CloudSync && typeof window.CloudSync.deleteLoan === "function") {
+        window.CloudSync.deleteLoan(id);
+    }
 }
 
 function getLoanTotalPayable(loan) {
@@ -557,6 +601,11 @@ function addCollection(coll) {
     
     recalculateLoanRepaymentAllocations(coll.loanId);
     saveToLocalStorage();
+    if (window.CloudSync) {
+        if (typeof window.CloudSync.saveCollection === "function") window.CloudSync.saveCollection(newTx);
+        const updatedLoan = getLoanById(coll.loanId);
+        if (updatedLoan && typeof window.CloudSync.saveLoan === "function") window.CloudSync.saveLoan(updatedLoan);
+    }
     return newTx;
 }
 
@@ -586,6 +635,15 @@ function updateCollection(txId, updatedColl) {
     }
     
     saveToLocalStorage();
+    if (window.CloudSync) {
+        if (typeof window.CloudSync.saveCollection === "function") window.CloudSync.saveCollection(tx);
+        const l1 = getLoanById(oldLoanId);
+        if (l1 && typeof window.CloudSync.saveLoan === "function") window.CloudSync.saveLoan(l1);
+        if (tx.loanId !== oldLoanId) {
+            const l2 = getLoanById(tx.loanId);
+            if (l2 && typeof window.CloudSync.saveLoan === "function") window.CloudSync.saveLoan(l2);
+        }
+    }
     return tx;
 }
 
@@ -596,6 +654,11 @@ function deleteCollection(txId) {
         g_collections.splice(idx, 1);
         recalculateLoanRepaymentAllocations(loanId);
         saveToLocalStorage();
+        if (window.CloudSync) {
+            if (typeof window.CloudSync.deleteCollection === "function") window.CloudSync.deleteCollection(txId);
+            const l = getLoanById(loanId);
+            if (l && typeof window.CloudSync.saveLoan === "function") window.CloudSync.saveLoan(l);
+        }
         return true;
     }
     return false;
@@ -646,7 +709,7 @@ function calculateKPIs() {
 
         // 1. Processing fee is entered first (upfront fee)
         // 2. Handover cost is recorded: handover = principal - upfrontFee
-        // 3. Any amount collected beyond handover cost is added to collection profit after full payment is made
+        // 3. Collection profit tracks settled loans: (Amount Collected - Handover Cost) on completed loans
         const outBal = getLoanOutstandingBalance(loan.id);
         const isFullyPaid = (loan.status === "Closed") || (outBal <= 0);
 
@@ -654,14 +717,9 @@ function calculateKPIs() {
             const collected = getLoanCollectedAmount(loan.id);
             const finalCollected = collected > 0 ? collected : payable;
             const profitBeyondHandover = Math.max(0, finalCollected - handover);
-            collectionProfit += upfrontFee + profitBeyondHandover;
-            completedLoansProfit += upfrontFee + profitBeyondHandover;
+            collectionProfit += profitBeyondHandover;
+            completedLoansProfit += profitBeyondHandover;
             completedLoansCount++;
-        } else {
-            // For active loans: upfront fee + any collection profit beyond handover cost
-            const collected = getLoanCollectedAmount(loan.id);
-            const profitBeyondHandover = Math.max(0, collected - handover);
-            collectionProfit += upfrontFee + profitBeyondHandover;
         }
 
         if (loan.status !== "Closed") {
@@ -687,8 +745,8 @@ function calculateKPIs() {
         }
     });
 
-    // Total Profit = Processing Fee + Total Payable Cost - Handover
-    const totalProfit = totalProcessingFees + totalPayableAmount - totalHandoverAmount;
+    // Total Profit = Total Payable Cost - Handover
+    const totalProfit = totalPayableAmount - totalHandoverAmount;
 
     const blockedCount = g_customers.filter(c => c.status === "Blocked").length;
 
@@ -831,7 +889,7 @@ function addUser(user) {
         return { success: false, message: "4-Digit MPIN is already taken by another admin." };
     }
 
-    g_users.push({
+    const newUser = {
         username: user.username,
         password: user.password,
         mpin: user.mpin,
@@ -839,8 +897,12 @@ function addUser(user) {
         mobile: user.mobile,
         status: "Active",
         createdDate: new Date().toISOString().split('T')[0]
-    });
+    };
+    g_users.push(newUser);
     saveToLocalStorage();
+    if (window.CloudSync && typeof window.CloudSync.saveUser === "function") {
+        window.CloudSync.saveUser(newUser);
+    }
     return { success: true };
 }
 
@@ -853,6 +915,9 @@ function updateUser(username, updatedFields) {
         if (updatedFields.mobile !== undefined) user.mobile = updatedFields.mobile;
         if (updatedFields.status !== undefined) user.status = updatedFields.status;
         saveToLocalStorage();
+        if (window.CloudSync && typeof window.CloudSync.saveUser === "function") {
+            window.CloudSync.saveUser(user);
+        }
         return true;
     }
     return false;
