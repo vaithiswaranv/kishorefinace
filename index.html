@@ -20,12 +20,17 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <!-- Firebase SDK (v10.8.0 Compat) for Real-Time Multi-Device Sync -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <!-- Custom Style Sheet -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=67">
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('finflow_theme') || 'dark';
+            const themeClass = savedTheme === 'mint' ? 'theme-mint' : 
+                               savedTheme === 'blue' ? 'theme-blue' : 
+                               savedTheme === 'peach' ? 'theme-peach' : 'theme-dark dark-theme';
+            document.documentElement.className = themeClass;
+        })();
+    </script>
 </head>
 <body class="dark-theme">
 
@@ -156,7 +161,33 @@
                     <h2 class="header-title" id="page-title-heading">Home Overview</h2>
                 </div>
                 <div class="header-right">
-                    <div id="cloud-sync-status-badge"></div>
+                    <!-- Dynamic Theme Switcher -->
+                    <div class="theme-switcher-wrapper">
+                        <button type="button" class="theme-switcher-btn" id="btn-theme-menu" title="Switch Visual Theme">
+                            <i class="fa-solid fa-palette text-cyan" id="current-theme-icon"></i>
+                            <span id="current-theme-label">Theme</span>
+                            <i class="fa-solid fa-chevron-down" style="font-size: 10px; opacity: 0.7;"></i>
+                        </button>
+                        <div class="theme-dropdown-menu" id="theme-dropdown-menu">
+                            <div class="theme-dropdown-item active" data-theme="dark">
+                                <span class="theme-dot" style="background: linear-gradient(135deg, #0B0F19, #6366F1);"></span>
+                                <span>🌙 Midnight Dark</span>
+                            </div>
+                            <div class="theme-dropdown-item" data-theme="mint">
+                                <span class="theme-dot" style="background: linear-gradient(135deg, #E6F3EC, #059669);"></span>
+                                <span>🌿 Soft Mint & Gray</span>
+                            </div>
+                            <div class="theme-dropdown-item" data-theme="blue">
+                                <span class="theme-dot" style="background: linear-gradient(135deg, #E7EEF8, #2563EB);"></span>
+                                <span>💎 Pale Blue & White</span>
+                            </div>
+                            <div class="theme-dropdown-item" data-theme="peach">
+                                <span class="theme-dot" style="background: linear-gradient(135deg, #FBECE0, #EA580C);"></span>
+                                <span>🍑 Soft Peach & Cream</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="date-time-widget">
                         <i class="fa-solid fa-calendar-days"></i>
                         <span id="current-dateTime">Aug 18, 2026 23:06:19 PM</span>
@@ -224,32 +255,8 @@
                             </div>
                         </div>
 
-                        <!-- 5. Pending Payment -->
-                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('reports')" title="Click to view in Reports">
-                            <div class="kpi-icon icon-amber">
-                                <i class="fa-solid fa-clock"></i>
-                            </div>
-                            <div class="kpi-info">
-                                <h3>Pending Payment</h3>
-                                <span class="kpi-val text-amber" id="kpi-pending-payments">₹0.00</span>
-                                <span class="kpi-trend trend-down" id="kpi-pending-payments-count"><i class="fa-solid fa-triangle-exclamation"></i> 0 Collections Pending</span>
-                            </div>
-                        </div>
-
-                        <!-- 6. Total Pending Payment -->
-                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('loans')" title="Click to view remaining balance across all active loans">
-                            <div class="kpi-icon icon-indigo">
-                                <i class="fa-solid fa-hourglass-half"></i>
-                            </div>
-                            <div class="kpi-info">
-                                <h3>Total Pending Payment</h3>
-                                <span class="kpi-val text-indigo" id="kpi-total-pending">₹0.00</span>
-                                <span class="kpi-trend trend-down" id="kpi-total-pending-sub"><i class="fa-solid fa-wallet"></i> Total Remaining Dues</span>
-                            </div>
-                        </div>
-
-                        <!-- 7. Overdue Dues -->
-                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('reports')" title="Click to view in Reports">
+                        <!-- 5. Overdue Dues -->
+                        <div class="kpi-card glass" style="cursor: pointer;" onclick="filterOverdueFromKPI()" title="Click to view Overdue Accounts in Reports">
                             <div class="kpi-icon icon-rose">
                                 <i class="fa-solid fa-circle-exclamation"></i>
                             </div>
@@ -257,6 +264,18 @@
                                 <h3>Overdue Dues</h3>
                                 <span class="kpi-val text-rose" id="kpi-overdue-balance">₹0.00</span>
                                 <span class="kpi-trend trend-down" id="kpi-overdue-count">0 Accounts Lagging</span>
+                            </div>
+                        </div>
+
+                        <!-- 6. Total Remaining Balance -->
+                        <div class="kpi-card glass" style="cursor: pointer;" onclick="switchModule('loans')" title="Click to view remaining balance across all active loans">
+                            <div class="kpi-icon icon-indigo">
+                                <i class="fa-solid fa-hourglass-half"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Total Remaining Balance</h3>
+                                <span class="kpi-val text-indigo" id="kpi-total-pending">₹0.00</span>
+                                <span class="kpi-trend trend-down" id="kpi-total-pending-sub"><i class="fa-solid fa-wallet"></i> Total Active Loan Dues</span>
                             </div>
                         </div>
 
@@ -337,11 +356,11 @@
                             </div>
                         </div>
 
-                        <!-- Pending & Overdue Payments Overview Widget -->
+                        <!-- Overdue Payments Overview Widget -->
                         <div class="table-container glass card-padding flex-item-large">
                             <div class="card-header-row">
-                                <h3><i class="fa-solid fa-clock text-amber"></i> Pending Payments & Overdues</h3>
-                                <button class="btn btn-secondary btn-xs" id="btn-dashboard-view-all-pending">View in Reports</button>
+                                <h3><i class="fa-solid fa-triangle-exclamation text-rose"></i> Overdue Payments</h3>
+                                <button class="btn btn-secondary btn-xs" id="btn-dashboard-view-all-pending"><i class="fa-solid fa-arrow-up-right-from-square"></i> View in Reports</button>
                             </div>
                             <div class="table-scroll-wrapper" style="max-height: 380px; overflow-y: auto;">
                                 <table class="custom-table" id="dashboard-pending-payments-table">
@@ -351,7 +370,7 @@
                                             <th>Due Date</th>
                                             <th>Borrower Name</th>
                                             <th>Loan ID</th>
-                                            <th class="text-right">Amount Due</th>
+                                            <th class="text-right">Overdue Amount</th>
                                             <th class="text-center">Status</th>
                                             <th class="text-center">Action</th>
                                         </tr>
@@ -597,8 +616,7 @@
                                 <select id="report-filter-status">
                                     <option value="All">All Statuses</option>
                                     <option value="Paid">Paid (Collections)</option>
-                                    <option value="Pending">Pending (Schedules)</option>
-                                    <option value="Overdue">Overdue (Past Dues)</option>
+                                    <option value="Overdue">Overdue (Missed Dues)</option>
                                 </select>
                             </div>
                             <div class="date-input btn-apply-wrapper">
@@ -703,11 +721,11 @@
                         </div>
                     </div>
 
-                    <!-- Unpaid Collections Registry Report Table -->
+                    <!-- Overdue Collections Registry Report Table -->
                     <div class="table-container glass margin-top">
                         <div class="card-header-row card-padding-x" style="padding-top: 15px;">
-                            <h3><i class="fa-solid fa-clock text-amber"></i> Unpaid Collections Register (Pending & Overdue)</h3>
-                            <button class="btn btn-secondary btn-xs" id="btn-export-unpaid-collections-pdf" title="Export Unpaid Collections Register as PDF">
+                            <h3><i class="fa-solid fa-triangle-exclamation text-rose"></i> Overdue Collections Register</h3>
+                            <button class="btn btn-secondary btn-xs" id="btn-export-unpaid-collections-pdf" title="Export Overdue Collections Register as PDF">
                                 <i class="fa-solid fa-file-pdf text-rose"></i> Export PDF
                             </button>
                         </div>
@@ -721,7 +739,7 @@
                                         <th>Borrower Name</th>
                                         <th>Loan ID</th>
                                         <th>Collection Type</th>
-                                        <th class="text-right">Collection Amount Due</th>
+                                        <th class="text-right">Overdue Amount</th>
                                         <th class="text-center">Status</th>
                                         <th class="text-center">Action</th>
                                     </tr>
@@ -798,74 +816,80 @@
                             </form>
                         </div>
 
-                        <!-- Cloud Database & Multi-Device Real-Time Sync -->
+                        <!-- Theme & Visual Styling -->
                         <div class="settings-card glass card-padding" style="grid-column: 1 / -1;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                                <div>
-                                    <h3 style="margin: 0;"><i class="fa-solid fa-cloud-arrow-up text-cyan"></i> Cloud Database & Real-Time Multi-Device Sync</h3>
-                                    <p class="text-muted" style="font-size: 12px; margin-top: 4px; margin-bottom: 0;">
-                                        Connect Firebase Firestore to instantly synchronize customers, loans, and collections across multiple mobile phones & computers in real time.
-                                    </p>
-                                </div>
-                                <div id="cloud-sync-status-indicator"></div>
-                            </div>
-
-                            <form id="settings-cloud-sync-form" class="margin-top">
-                                <div class="form-row">
-                                    <div class="form-group flex-1">
-                                        <label for="cloud-sync-project-id"><i class="fa-solid fa-folder-tree"></i> Project ID <span class="required">*</span></label>
-                                        <input type="text" id="cloud-sync-project-id" placeholder="e.g. finflow-production" required>
+                            <h3><i class="fa-solid fa-palette text-cyan"></i> Visual Theme & Appearance</h3>
+                            <p class="text-muted" style="font-size: 12px; margin-top: 5px; margin-bottom: 0;">
+                                Choose your preferred visual style. Changes apply immediately and are saved across all sessions without altering any data.
+                            </p>
+                            <div class="theme-cards-grid">
+                                <!-- Option 1: Dark Mode -->
+                                <div class="theme-card-option active" data-theme="dark" onclick="applyTheme('dark')">
+                                    <div class="theme-card-preview" style="background: #0B0F19;">
+                                        <div class="theme-preview-sidebar" style="background: #111827; border-right: 1px solid rgba(255,255,255,0.08);"></div>
+                                        <div class="theme-preview-body">
+                                            <div class="theme-preview-bar" style="background: #6366F1;"></div>
+                                            <div class="theme-preview-card" style="background: rgba(22,28,45,0.8); border: 1px solid rgba(255,255,255,0.08);">
+                                                <div class="theme-preview-chip" style="background: #06B6D4;"></div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="form-group flex-2">
-                                        <label for="cloud-sync-api-key"><i class="fa-solid fa-key"></i> Web API Key <span class="required">*</span></label>
-                                        <input type="password" id="cloud-sync-api-key" placeholder="AIzaSy..." required>
-                                    </div>
-                                </div>
-
-                                <div class="form-row">
-                                    <div class="form-group flex-1">
-                                        <label for="cloud-sync-auth-domain"><i class="fa-solid fa-globe"></i> Auth Domain</label>
-                                        <input type="text" id="cloud-sync-auth-domain" placeholder="e.g. finflow-production.firebaseapp.com">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label for="cloud-sync-storage-bucket"><i class="fa-solid fa-bucket"></i> Storage Bucket</label>
-                                        <input type="text" id="cloud-sync-storage-bucket" placeholder="e.g. finflow-production.appspot.com">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label for="cloud-sync-app-id"><i class="fa-solid fa-mobile-screen"></i> App ID</label>
-                                        <input type="text" id="cloud-sync-app-id" placeholder="1:123456789:web:abcdef">
+                                    <div class="theme-card-info">
+                                        <h4><span>🌙 Midnight Dark</span> <i class="fa-solid fa-circle-check theme-check-icon"></i></h4>
+                                        <p>Deep navy glassmorphic dark interface with vibrant neon accents.</p>
                                     </div>
                                 </div>
 
-                                <div id="cloud-sync-feedback" class="margin-top-sm" style="display: none;"></div>
-
-                                <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
-                                    <button type="button" class="btn btn-secondary" id="btn-cloud-test-connection">
-                                        <i class="fa-solid fa-bolt text-amber"></i> Test Connection
-                                    </button>
-                                    <button type="submit" class="btn btn-primary" id="btn-cloud-save-config">
-                                        <i class="fa-solid fa-cloud-arrow-up"></i> Save & Connect Cloud
-                                    </button>
-                                    <button type="button" class="btn btn-gradient" id="btn-cloud-sync-all" title="Upload all existing local customers, loans, and collections to the cloud database" style="background: linear-gradient(135deg, #06b6d4, #3b82f6);">
-                                        <i class="fa-solid fa-arrows-rotate"></i> Push All Local Data to Cloud
-                                    </button>
-                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-cloud-guide" style="margin-left: auto;">
-                                        <i class="fa-solid fa-circle-question text-cyan"></i> Setup Guide (Free Forever)
-                                    </button>
+                                <!-- Option 2: Soft Mint Green & Light Gray -->
+                                <div class="theme-card-option" data-theme="mint" onclick="applyTheme('mint')">
+                                    <div class="theme-card-preview" style="background: #F2F7F4;">
+                                        <div class="theme-preview-sidebar" style="background: #E6F3EC; border-right: 1px solid rgba(16,185,129,0.18);"></div>
+                                        <div class="theme-preview-body">
+                                            <div class="theme-preview-bar" style="background: #059669;"></div>
+                                            <div class="theme-preview-card" style="background: #FFFFFF; border: 1px solid rgba(16,185,129,0.18);">
+                                                <div class="theme-preview-chip" style="background: #0D9488;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="theme-card-info">
+                                        <h4><span>🌿 Soft Mint & Gray</span> <i class="fa-solid fa-circle-check theme-check-icon"></i></h4>
+                                        <p>Calm, fresh, and natural financial feel with crisp light gray and sage tones.</p>
+                                    </div>
                                 </div>
-                            </form>
 
-                            <!-- Setup Instructions Accordion -->
-                            <div id="cloud-setup-guide" class="glass margin-top" style="display: none; padding: 15px; border-radius: 8px; border: 1px dashed rgba(6, 182, 212, 0.4); background: rgba(6, 182, 212, 0.04); font-size: 12px; line-height: 1.6;">
-                                <h4 style="color: var(--clr-cyan); margin-bottom: 8px;"><i class="fa-solid fa-circle-info"></i> How to Get Free Firebase Cloud Database Credentials (3 Minutes):</h4>
-                                <ol style="padding-left: 20px; margin: 0; color: var(--text-secondary);">
-                                    <li>Go to <a href="https://console.firebase.google.com" target="_blank" style="color: var(--clr-cyan); text-decoration: underline;">console.firebase.google.com</a> with any Google account (100% Free Spark plan).</li>
-                                    <li>Click <strong>"Add Project"</strong> &rarr; name it <code>finflow</code> (disable Google Analytics if asked).</li>
-                                    <li>Click <strong>"Build" &rarr; "Firestore Database" &rarr; "Create Database"</strong> &rarr; choose your region (e.g. <code>asia-south1 (Mumbai)</code> or default) &rarr; select <strong>"Start in test mode"</strong>.</li>
-                                    <li>Go to <strong>Project Settings (⚙️ icon top-left) &rarr; General tab &rarr; "Your Apps"</strong> &rarr; click Web (<code>&lt;/&gt;</code>) icon &rarr; register app.</li>
-                                    <li>Copy the <code>apiKey</code>, <code>projectId</code>, <code>authDomain</code>, <code>storageBucket</code>, and <code>appId</code> values into the fields above, then click <strong>"Save & Connect Cloud"</strong>.</li>
-                                    <li>Enter these same credentials on all your phones & devices. Any customer added or loan opened on Phone 1 will immediately reflect on Phone 2!</li>
-                                </ol>
+                                <!-- Option 3: Pale Blue & Warm White -->
+                                <div class="theme-card-option" data-theme="blue" onclick="applyTheme('blue')">
+                                    <div class="theme-card-preview" style="background: #F3F7FC;">
+                                        <div class="theme-preview-sidebar" style="background: #E7EEF8; border-right: 1px solid rgba(37,99,235,0.15);"></div>
+                                        <div class="theme-preview-body">
+                                            <div class="theme-preview-bar" style="background: #2563EB;"></div>
+                                            <div class="theme-preview-card" style="background: #FFFFFF; border: 1px solid rgba(37,99,235,0.15);">
+                                                <div class="theme-preview-chip" style="background: #0284C7;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="theme-card-info">
+                                        <h4><span>💎 Pale Blue & White</span> <i class="fa-solid fa-circle-check theme-check-icon"></i></h4>
+                                        <p>Clean, crisp, corporate & professional look with subtle royal blue accents.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Option 4: Soft Peach & Cream -->
+                                <div class="theme-card-option" data-theme="peach" onclick="applyTheme('peach')">
+                                    <div class="theme-card-preview" style="background: #FAF5EE;">
+                                        <div class="theme-preview-sidebar" style="background: #FBECE0; border-right: 1px solid rgba(234,88,12,0.16);"></div>
+                                        <div class="theme-preview-body">
+                                            <div class="theme-preview-bar" style="background: #EA580C;"></div>
+                                            <div class="theme-preview-card" style="background: #FFFFFF; border: 1px solid rgba(234,88,12,0.16);">
+                                                <div class="theme-preview-chip" style="background: #F59E0B;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="theme-card-info">
+                                        <h4><span>🍑 Soft Peach & Cream</span> <i class="fa-solid fa-circle-check theme-check-icon"></i></h4>
+                                        <p>Warm, inviting, premium modern look with soft cream and terracotta sunset.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -1540,10 +1564,9 @@
         </div>
     </div>
 
-    <script src="js/cloud_sync.js?v=63"></script>
-    <script src="js/data.js?v=63"></script>
-    <script src="js/sms.js?v=63"></script>
-    <script src="js/pdf.js?v=63"></script>
-    <script src="js/app.js?v=63"></script>
+    <script src="js/data.js?v=67"></script>
+    <script src="js/sms.js?v=67"></script>
+    <script src="js/pdf.js?v=67"></script>
+    <script src="js/app.js?v=67"></script>
 </body>
 </html>

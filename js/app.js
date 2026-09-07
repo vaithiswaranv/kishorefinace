@@ -96,32 +96,13 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initial load
     initRouter();
     initLogin();
+    initThemeSwitcher();
     initSettings();
     initCustomers();
     initLoans();
     initCollections();
     initReports();
     updateBrandDisplay();
-
-    // Initialize Cloud Real-Time Multi-Device Sync
-    if (window.CloudSync && typeof window.CloudSync.init === "function") {
-        window.CloudSync.init();
-    }
-
-    // Listen for live updates pushed from other devices
-    window.addEventListener("finflow:cloud-update", (e) => {
-        console.log("Real-time cloud database update received:", e.detail);
-        try {
-            renderDashboard();
-            renderCustomersList();
-            renderLoansList();
-            renderCollectionsToday();
-            renderReports();
-            updateBrandDisplay();
-        } catch (err) {
-            console.warn("View re-render on cloud update caught error:", err);
-        }
-    });
     
     // Quick pay button routing
     document.getElementById("btn-quick-new-collection").addEventListener("click", () => {
@@ -691,39 +672,33 @@ function renderDashboard() {
         }
     }
 
-    // Pending Payments Overview table (list all)
+    // Overdue Payments Overview table
     const pendingTableBody = document.querySelector("#dashboard-pending-payments-table tbody");
     if (pendingTableBody) {
         pendingTableBody.innerHTML = "";
-        const pendingItems = getAllPendingPayments(); // list all pending
-        if (pendingItems.length === 0) {
-            pendingTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No pending payments found. All accounts up to date!</td></tr>`;
+        const overdueItems = getAllPendingPayments(null, null, "", "Overdue"); // list all overdue past dues
+        if (overdueItems.length === 0) {
+            pendingTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding: 24px;"><i class="fa-solid fa-circle-check text-emerald" style="font-size: 18px; margin-bottom: 6px; display: block;"></i> No overdue payments found. All borrower accounts are up to date!</td></tr>`;
         } else {
-            pendingItems.forEach((item, idx) => {
+            overdueItems.forEach((item, idx) => {
                 const row = document.createElement("tr");
-                let badgeClass = "badge badge-pending";
-                let statusText = `<i class="fa-solid fa-clock"></i> Due Today`;
-                let dateDisplay = `<span style="color:var(--clr-amber); font-weight:600;"><i class="fa-solid fa-calendar-day"></i> Today (${formatDateToDMY(item.dueDate)})</span>`;
+                const daysLate = Math.max(1, Math.floor((new Date() - new Date(item.dueDate + "T00:00:00")) / (1000 * 60 * 60 * 24)));
+                const dateDisplay = `<span style="color:var(--clr-rose); font-weight:600;"><i class="fa-solid fa-calendar-xmark"></i> ${formatDateToDMY(item.dueDate)}</span>`;
+                const statusBadge = `<span class="badge badge-overdue"><i class="fa-solid fa-triangle-exclamation"></i> ${daysLate}d Overdue</span>`;
 
-                if (item.isOverdue) {
-                    badgeClass = "badge badge-overdue";
-                    statusText = `<i class="fa-solid fa-triangle-exclamation"></i> Missed`;
-                    dateDisplay = `<span style="color:var(--clr-rose); font-weight:600;"><i class="fa-solid fa-calendar-xmark"></i> ${formatDateToDMY(item.dueDate)}</span>`;
-                } else if (!item.isDueToday) {
-                    badgeClass = "badge";
-                    statusText = item.status;
-                    dateDisplay = formatDateToDMY(item.dueDate);
-                }
+                const callBtn = item.mobile ? `<a href="tel:${item.mobile}" class="btn btn-secondary btn-xs" title="Call ${item.borrowerName} (${item.mobile})"><i class="fa-solid fa-phone text-emerald"></i></a>` : "";
 
                 row.innerHTML = `
                     <td><strong>${idx + 1}</strong></td>
                     <td>${dateDisplay}</td>
                     <td><strong>${item.borrowerName}</strong></td>
                     <td><span class="badge badge-indigo">${item.loanId}</span></td>
-                    <td class="text-right text-amber">₹${item.pendingAmount.toLocaleString()}</td>
-                    <td class="text-center"><span class="${badgeClass}">${statusText}</span></td>
-                    <td class="text-center">
-                        <button class="btn btn-primary btn-xs" onclick="openPaymentFormForLoan('${item.loanId}')" title="Record collection for this loan"><i class="fa-solid fa-indian-rupee-sign"></i> Pay</button>
+                    <td class="text-right text-rose" style="font-weight:700;">₹${item.pendingAmount.toLocaleString()}</td>
+                    <td class="text-center">${statusBadge}</td>
+                    <td class="text-center" style="white-space: nowrap;">
+                        <button class="btn btn-primary btn-xs" onclick="openPaymentFormForLoan('${item.loanId}')" title="Collect Overdue Amount"><i class="fa-solid fa-indian-rupee-sign"></i> Pay</button>
+                        <button class="btn btn-secondary btn-xs" onclick="triggerDueReminderFromReport('${item.loanId}', '${item.customerId}', ${item.pendingAmount}, '${item.dueDate}', true)" title="Send Overdue SMS Reminder"><i class="fa-solid fa-comment-sms text-cyan"></i> SMS</button>
+                        ${callBtn}
                     </td>
                 `;
                 pendingTableBody.appendChild(row);
@@ -737,14 +712,14 @@ function renderDashboard() {
         viewAllBtn.onclick = () => switchModule("collections");
     }
 
-    // Dashboard View All pending redirection button
+    // Dashboard View All overdue redirection button
     const viewAllPendingBtn = document.getElementById("btn-dashboard-view-all-pending");
     if (viewAllPendingBtn) {
         viewAllPendingBtn.onclick = () => {
             switchModule("reports");
             const filterStatus = document.getElementById("report-filter-status");
             if (filterStatus) {
-                filterStatus.value = "Pending";
+                filterStatus.value = "Overdue";
             }
             renderReports();
         };
@@ -774,6 +749,10 @@ function renderDashboardCharts() {
         collectionsTrend.push(daySum);
     }
 
+    const isDark = document.body.classList.contains("dark-theme") || document.body.classList.contains("theme-dark");
+    const chartGridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.06)';
+    const chartTickColor = isDark ? '#9ca3af' : '#475569';
+
     // Chart 1: Collection Trends
     const ctxCollections = document.getElementById("chart-collections");
     if (ctxCollections) {
@@ -794,7 +773,7 @@ function renderDashboardCharts() {
                     fill: true,
                     tension: 0.3,
                     pointBackgroundColor: '#06b6d4',
-                    pointBorderColor: '#ffffff',
+                    pointBorderColor: isDark ? '#ffffff' : '#0F172A',
                     pointHoverRadius: 6
                 }]
             },
@@ -805,8 +784,8 @@ function renderDashboardCharts() {
                     legend: { display: false }
                 },
                 scales: {
-                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#9ca3af' } },
-                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#9ca3af' }, beginAtZero: true }
+                    x: { grid: { color: chartGridColor }, ticks: { color: chartTickColor } },
+                    y: { grid: { color: chartGridColor }, ticks: { color: chartTickColor }, beginAtZero: true }
                 }
             }
         });
@@ -831,7 +810,7 @@ function renderDashboardCharts() {
                     data: counts,
                     backgroundColor: ['#6366f1', '#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#14b8a6'],
                     borderWidth: 1,
-                    borderColor: '#1e293b'
+                    borderColor: isDark ? '#1e293b' : '#ffffff'
                 }]
             },
             options: {
@@ -840,7 +819,7 @@ function renderDashboardCharts() {
                 plugins: {
                     legend: { 
                         position: 'bottom',
-                        labels: { color: '#f3f4f6', font: { size: 10 } }
+                        labels: { color: isDark ? '#f3f4f6' : '#1e293b', font: { size: 10 } }
                     }
                 }
             }
@@ -2609,30 +2588,26 @@ function renderReports() {
         }
     }
 
-    // 7. Render separate Unpaid Collections table
+    // 7. Render separate Overdue Collections table
     const unpaidTableBody = document.querySelector("#reports-unpaid-table tbody");
     if (unpaidTableBody) {
         unpaidTableBody.innerHTML = "";
         
         let unpaidRows = [];
-        if (status === "All" || status === "Pending" || status === "Overdue") {
-            unpaidRows = getAllPendingPayments(startStr, endStr, query, status);
+        if (status === "All" || status === "Overdue" || status === "Pending") {
+            unpaidRows = getAllPendingPayments(startStr, endStr, query, status === "All" ? "Overdue" : status);
         }
 
         if (unpaidRows.length === 0) {
-            unpaidTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No unpaid collections found.</td></tr>`;
+            unpaidTableBody.innerHTML = `<tr><td colspan="9" class="text-center text-muted" style="padding: 20px;"><i class="fa-solid fa-circle-check text-emerald"></i> No overdue collections found for the selected period.</td></tr>`;
         } else {
             unpaidRows.forEach((r, idx) => {
                 const row = document.createElement("tr");
-                let statusBadge = `<span class="badge badge-pending"><i class="fa-solid fa-clock"></i> Due Today</span>`;
-                let dateDisplay = `<span style="color:var(--clr-amber); font-weight:600;"><i class="fa-solid fa-calendar-day"></i> Today (${formatDateToDMY(r.dueDate)})</span>`;
-                if (r.isOverdue) {
-                    statusBadge = `<span class="badge badge-overdue"><i class="fa-solid fa-triangle-exclamation"></i> Missed Due</span>`;
-                    dateDisplay = `<span style="color:var(--clr-rose); font-weight:600;"><i class="fa-solid fa-calendar-xmark"></i> ${formatDateToDMY(r.dueDate)}</span>`;
-                } else if (!r.isDueToday) {
-                    statusBadge = `<span class="badge badge-pending">${r.status}</span>`;
-                    dateDisplay = formatDateToDMY(r.dueDate);
-                }
+                const daysLate = Math.max(1, Math.floor((new Date() - new Date(r.dueDate + "T00:00:00")) / (1000 * 60 * 60 * 24)));
+                const statusBadge = `<span class="badge badge-overdue"><i class="fa-solid fa-triangle-exclamation"></i> ${daysLate}d Late</span>`;
+                const dateDisplay = `<span style="color:var(--clr-rose); font-weight:600;"><i class="fa-solid fa-calendar-xmark"></i> ${formatDateToDMY(r.dueDate)}</span>`;
+                const callBtn = r.mobile ? `<a href="tel:${r.mobile}" class="btn btn-secondary btn-xs" title="Call ${r.borrowerName}"><i class="fa-solid fa-phone text-emerald"></i></a>` : "";
+
                 row.innerHTML = `
                     <td><strong>${idx + 1}</strong></td>
                     <td>${dateDisplay}</td>
@@ -2640,12 +2615,14 @@ function renderReports() {
                     <td><strong>${r.borrowerName}</strong></td>
                     <td><span class="badge badge-indigo">${r.loanId}</span></td>
                     <td>${r.frequency}</td>
-                    <td class="text-right" style="color:var(--clr-amber)">₹${r.pendingAmount.toLocaleString()}</td>
+                    <td class="text-right text-rose" style="font-weight:700;">₹${r.pendingAmount.toLocaleString()}</td>
                     <td class="text-center">${statusBadge}</td>
-                    <td class="text-center">
-                        <button class="btn btn-secondary btn-xs" onclick="triggerDueReminderFromReport('${r.loanId}', '${r.customerId}', ${r.pendingAmount}, '${r.dueDate}', ${r.isOverdue})" title="Send Due Reminder SMS to Client">
-                            <i class="fa-solid fa-comment-sms text-cyan"></i> Due SMS
+                    <td class="text-center" style="white-space: nowrap;">
+                        <button class="btn btn-primary btn-xs" onclick="openPaymentFormForLoan('${r.loanId}')" title="Collect Overdue Amount"><i class="fa-solid fa-indian-rupee-sign"></i> Pay</button>
+                        <button class="btn btn-secondary btn-xs" onclick="triggerDueReminderFromReport('${r.loanId}', '${r.customerId}', ${r.pendingAmount}, '${r.dueDate}', true)" title="Send Overdue Reminder SMS to Client">
+                            <i class="fa-solid fa-comment-sms text-cyan"></i> Overdue SMS
                         </button>
+                        ${callBtn}
                     </td>
                 `;
                 unpaidTableBody.appendChild(row);
@@ -2653,6 +2630,16 @@ function renderReports() {
         }
     }
 }
+
+function filterOverdueFromKPI() {
+    switchModule("reports");
+    const filterStatus = document.getElementById("report-filter-status");
+    if (filterStatus) {
+        filterStatus.value = "Overdue";
+    }
+    renderReports();
+}
+window.filterOverdueFromKPI = filterOverdueFromKPI;
 
 function triggerDueReminderFromReport(loanId, customerId, pendingAmount, dueDate, isOverdue) {
     const customer = getCustomerById(customerId);
@@ -2846,124 +2833,6 @@ function initSettings() {
 
             successDiv.textContent = "4-Digit login MPIN updated successfully.";
             mpinForm.reset();
-        });
-    }
-
-    // Cloud Database & Multi-Device Real-Time Sync Handlers
-    const cloudForm = document.getElementById("settings-cloud-sync-form");
-    const cloudTestBtn = document.getElementById("btn-cloud-test-connection");
-    const cloudSyncAllBtn = document.getElementById("btn-cloud-sync-all");
-    const cloudGuideBtn = document.getElementById("btn-toggle-cloud-guide");
-    const cloudGuideDiv = document.getElementById("cloud-setup-guide");
-    const cloudFeedback = document.getElementById("cloud-sync-feedback");
-
-    if (window.CloudSync) {
-        const savedCfg = window.CloudSync.getConfig();
-        if (savedCfg) {
-            if (document.getElementById("cloud-sync-project-id")) document.getElementById("cloud-sync-project-id").value = savedCfg.projectId || "";
-            if (document.getElementById("cloud-sync-api-key")) document.getElementById("cloud-sync-api-key").value = savedCfg.apiKey || "";
-            if (document.getElementById("cloud-sync-auth-domain")) document.getElementById("cloud-sync-auth-domain").value = savedCfg.authDomain || "";
-            if (document.getElementById("cloud-sync-storage-bucket")) document.getElementById("cloud-sync-storage-bucket").value = savedCfg.storageBucket || "";
-            if (document.getElementById("cloud-sync-app-id")) document.getElementById("cloud-sync-app-id").value = savedCfg.appId || "";
-        }
-    }
-
-    if (cloudGuideBtn && cloudGuideDiv) {
-        cloudGuideBtn.addEventListener("click", () => {
-            cloudGuideDiv.style.display = cloudGuideDiv.style.display === "none" ? "block" : "none";
-        });
-    }
-
-    function showCloudFeedback(message, isSuccess = true) {
-        if (!cloudFeedback) return;
-        cloudFeedback.style.display = "block";
-        cloudFeedback.className = isSuccess ? "cloud-feedback-box cloud-feedback-success" : "cloud-feedback-box cloud-feedback-error";
-        cloudFeedback.innerHTML = `<i class="fa-solid ${isSuccess ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> <span>${message}</span>`;
-    }
-
-    if (cloudTestBtn) {
-        cloudTestBtn.addEventListener("click", async () => {
-            const config = {
-                projectId: document.getElementById("cloud-sync-project-id").value.trim(),
-                apiKey: document.getElementById("cloud-sync-api-key").value.trim(),
-                authDomain: document.getElementById("cloud-sync-auth-domain").value.trim() || `${document.getElementById("cloud-sync-project-id").value.trim()}.firebaseapp.com`,
-                storageBucket: document.getElementById("cloud-sync-storage-bucket").value.trim() || `${document.getElementById("cloud-sync-project-id").value.trim()}.appspot.com`,
-                appId: document.getElementById("cloud-sync-app-id").value.trim() || ""
-            };
-
-            if (!config.projectId || !config.apiKey) {
-                showCloudFeedback("Please enter both Project ID and Web API Key before testing.", false);
-                return;
-            }
-
-            cloudTestBtn.disabled = true;
-            cloudTestBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Testing...`;
-
-            try {
-                const res = await window.CloudSync.testConnection(config);
-                showCloudFeedback(res.message || "Connection successful! Firestore database is accessible.", true);
-            } catch (err) {
-                showCloudFeedback(err.message || "Failed to connect to Firebase Firestore.", false);
-            } finally {
-                cloudTestBtn.disabled = false;
-                cloudTestBtn.innerHTML = `<i class="fa-solid fa-bolt text-amber"></i> Test Connection`;
-            }
-        });
-    }
-
-    if (cloudForm) {
-        cloudForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const config = {
-                projectId: document.getElementById("cloud-sync-project-id").value.trim(),
-                apiKey: document.getElementById("cloud-sync-api-key").value.trim(),
-                authDomain: document.getElementById("cloud-sync-auth-domain").value.trim() || `${document.getElementById("cloud-sync-project-id").value.trim()}.firebaseapp.com`,
-                storageBucket: document.getElementById("cloud-sync-storage-bucket").value.trim() || `${document.getElementById("cloud-sync-project-id").value.trim()}.appspot.com`,
-                appId: document.getElementById("cloud-sync-app-id").value.trim() || ""
-            };
-
-            const submitBtn = document.getElementById("btn-cloud-save-config");
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Connecting...`;
-            }
-
-            try {
-                const success = await window.CloudSync.saveConfig(config);
-                if (success) {
-                    showCloudFeedback("Cloud credentials saved and live multi-device sync connected successfully!", true);
-                } else {
-                    showCloudFeedback("Credentials saved. Operating with cloud connection.", true);
-                }
-            } catch (err) {
-                showCloudFeedback("Failed to save and connect: " + err.message, false);
-            } finally {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Save & Connect Cloud`;
-                }
-            }
-        });
-    }
-
-    if (cloudSyncAllBtn) {
-        cloudSyncAllBtn.addEventListener("click", async () => {
-            if (!confirm("Push all local customers, loans, and collections to the cloud database?\n\nThis will synchronize all local records with Firestore so other devices can access them.")) {
-                return;
-            }
-
-            cloudSyncAllBtn.disabled = true;
-            cloudSyncAllBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Syncing to Cloud...`;
-
-            try {
-                const res = await window.CloudSync.syncAllLocalToCloud();
-                showCloudFeedback(`Successfully pushed ${res.count} records to the cloud! All connected devices will now see this data.`, true);
-            } catch (err) {
-                showCloudFeedback("Upload failed: " + err.message, false);
-            } finally {
-                cloudSyncAllBtn.disabled = false;
-                cloudSyncAllBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> Push All Local Data to Cloud`;
-            }
         });
     }
 
@@ -3486,5 +3355,107 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+
+// ==================== THEME MANAGEMENT ENGINE ====================
+const THEMES = {
+    dark: {
+        id: "dark",
+        name: "Midnight Dark",
+        shortName: "Dark",
+        icon: "fa-moon",
+        class: "theme-dark dark-theme"
+    },
+    mint: {
+        id: "mint",
+        name: "Soft Mint & Gray",
+        shortName: "Mint Green",
+        icon: "fa-leaf",
+        class: "theme-mint"
+    },
+    blue: {
+        id: "blue",
+        name: "Pale Blue & White",
+        shortName: "Pale Blue",
+        icon: "fa-gem",
+        class: "theme-blue"
+    },
+    peach: {
+        id: "peach",
+        name: "Soft Peach & Cream",
+        shortName: "Peach Cream",
+        icon: "fa-sun",
+        class: "theme-peach"
+    }
+};
+
+function applyTheme(themeId, persist = true) {
+    if (!THEMES[themeId]) themeId = "dark";
+    const theme = THEMES[themeId];
+    
+    // Update documentElement & body classes
+    document.documentElement.className = theme.class;
+    document.body.className = theme.class;
+    
+    // Update header label and icon
+    const currentLabel = document.getElementById("current-theme-label");
+    const currentIcon = document.getElementById("current-theme-icon");
+    if (currentLabel) currentLabel.textContent = theme.shortName;
+    if (currentIcon) currentIcon.className = `fa-solid ${theme.icon} text-cyan`;
+    
+    // Update active dropdown items
+    document.querySelectorAll(".theme-dropdown-item").forEach(item => {
+        item.classList.toggle("active", item.getAttribute("data-theme") === themeId);
+    });
+    
+    // Update active settings cards
+    document.querySelectorAll(".theme-card-option").forEach(card => {
+        card.classList.toggle("active", card.getAttribute("data-theme") === themeId);
+    });
+    
+    // Close dropdown menu if open
+    const dropdown = document.getElementById("theme-dropdown-menu");
+    if (dropdown) dropdown.classList.remove("show");
+    
+    if (persist) {
+        localStorage.setItem("finflow_theme", themeId);
+    }
+    
+    // Re-render charts if currently rendered on dashboard
+    if (typeof chartCollections !== "undefined" && chartCollections) {
+        renderDashboardCharts();
+    }
+}
+window.applyTheme = applyTheme;
+
+function initThemeSwitcher() {
+    const savedTheme = localStorage.getItem("finflow_theme") || "dark";
+    applyTheme(savedTheme, false);
+    
+    const themeBtn = document.getElementById("btn-theme-menu");
+    const themeDropdown = document.getElementById("theme-dropdown-menu");
+    
+    if (themeBtn && themeDropdown) {
+        themeBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            themeDropdown.classList.toggle("show");
+        });
+        
+        document.querySelectorAll(".theme-dropdown-item").forEach(item => {
+            item.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const themeId = item.getAttribute("data-theme");
+                applyTheme(themeId);
+            });
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener("click", (e) => {
+            if (!themeBtn.contains(e.target) && !themeDropdown.contains(e.target)) {
+                themeDropdown.classList.remove("show");
+            }
+        });
+    }
+}
+
 
 

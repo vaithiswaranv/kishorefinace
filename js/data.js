@@ -343,9 +343,6 @@ function addCustomer(cust) {
     };
     g_customers.unshift(newCust);
     saveToLocalStorage();
-    if (window.CloudSync && typeof window.CloudSync.saveCustomer === "function") {
-        window.CloudSync.saveCustomer(newCust);
-    }
 }
 
 function updateCustomer(id, updatedCust) {
@@ -366,9 +363,6 @@ function updateCustomer(id, updatedCust) {
         c.aadhaar = updatedCust.aadhaar || c.aadhaar;
         c.status = updatedCust.status || c.status;
         saveToLocalStorage();
-        if (window.CloudSync && typeof window.CloudSync.saveCustomer === "function") {
-            window.CloudSync.saveCustomer(c);
-        }
     }
 }
 
@@ -378,12 +372,6 @@ function deleteCustomer(id) {
     g_loans = g_loans.filter(l => l.customerId !== id);
     g_collections = g_collections.filter(c => c.customerId !== id && !associatedLoanIds.includes(c.loanId));
     saveToLocalStorage();
-    if (window.CloudSync) {
-        if (typeof window.CloudSync.deleteCustomer === "function") window.CloudSync.deleteCustomer(id);
-        associatedLoanIds.forEach(lid => {
-            if (typeof window.CloudSync.deleteLoan === "function") window.CloudSync.deleteLoan(lid);
-        });
-    }
 }
 
 function updateCustomerStatus(id, status) {
@@ -391,9 +379,6 @@ function updateCustomerStatus(id, status) {
     if (c) {
         c.status = status;
         saveToLocalStorage();
-        if (window.CloudSync && typeof window.CloudSync.saveCustomer === "function") {
-            window.CloudSync.saveCustomer(c);
-        }
     }
 }
 
@@ -438,9 +423,6 @@ function addLoan(loan) {
     }
 
     saveToLocalStorage();
-    if (window.CloudSync && typeof window.CloudSync.saveLoan === "function") {
-        window.CloudSync.saveLoan(l);
-    }
 }
 
 function updateLoan(id, updatedLoan) {
@@ -477,9 +459,6 @@ function updateLoan(id, updatedLoan) {
         }
         
         saveToLocalStorage();
-        if (window.CloudSync && typeof window.CloudSync.saveLoan === "function") {
-            window.CloudSync.saveLoan(l);
-        }
     }
 }
 
@@ -487,9 +466,6 @@ function deleteLoan(id) {
     g_loans = g_loans.filter(l => l.id !== id);
     g_collections = g_collections.filter(c => c.loanId !== id);
     saveToLocalStorage();
-    if (window.CloudSync && typeof window.CloudSync.deleteLoan === "function") {
-        window.CloudSync.deleteLoan(id);
-    }
 }
 
 function getLoanTotalPayable(loan) {
@@ -601,11 +577,6 @@ function addCollection(coll) {
     
     recalculateLoanRepaymentAllocations(coll.loanId);
     saveToLocalStorage();
-    if (window.CloudSync) {
-        if (typeof window.CloudSync.saveCollection === "function") window.CloudSync.saveCollection(newTx);
-        const updatedLoan = getLoanById(coll.loanId);
-        if (updatedLoan && typeof window.CloudSync.saveLoan === "function") window.CloudSync.saveLoan(updatedLoan);
-    }
     return newTx;
 }
 
@@ -635,15 +606,6 @@ function updateCollection(txId, updatedColl) {
     }
     
     saveToLocalStorage();
-    if (window.CloudSync) {
-        if (typeof window.CloudSync.saveCollection === "function") window.CloudSync.saveCollection(tx);
-        const l1 = getLoanById(oldLoanId);
-        if (l1 && typeof window.CloudSync.saveLoan === "function") window.CloudSync.saveLoan(l1);
-        if (tx.loanId !== oldLoanId) {
-            const l2 = getLoanById(tx.loanId);
-            if (l2 && typeof window.CloudSync.saveLoan === "function") window.CloudSync.saveLoan(l2);
-        }
-    }
     return tx;
 }
 
@@ -654,11 +616,6 @@ function deleteCollection(txId) {
         g_collections.splice(idx, 1);
         recalculateLoanRepaymentAllocations(loanId);
         saveToLocalStorage();
-        if (window.CloudSync) {
-            if (typeof window.CloudSync.deleteCollection === "function") window.CloudSync.deleteCollection(txId);
-            const l = getLoanById(loanId);
-            if (l && typeof window.CloudSync.saveLoan === "function") window.CloudSync.saveLoan(l);
-        }
         return true;
     }
     return false;
@@ -900,9 +857,6 @@ function addUser(user) {
     };
     g_users.push(newUser);
     saveToLocalStorage();
-    if (window.CloudSync && typeof window.CloudSync.saveUser === "function") {
-        window.CloudSync.saveUser(newUser);
-    }
     return { success: true };
 }
 
@@ -915,9 +869,6 @@ function updateUser(username, updatedFields) {
         if (updatedFields.mobile !== undefined) user.mobile = updatedFields.mobile;
         if (updatedFields.status !== undefined) user.status = updatedFields.status;
         saveToLocalStorage();
-        if (window.CloudSync && typeof window.CloudSync.saveUser === "function") {
-            window.CloudSync.saveUser(user);
-        }
         return true;
     }
     return false;

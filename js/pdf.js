@@ -683,7 +683,7 @@ function exportReportsPDF(startStr, endStr) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(17, 24, 39);
-    doc.text("UNPAID COLLECTIONS REGISTER (PENDING & OVERDUE)", 15, y);
+    doc.text("OVERDUE COLLECTIONS REGISTER", 15, y);
     doc.line(15, y + 2, 195, y + 2);
     y += 8;
 
@@ -1336,7 +1336,7 @@ function exportUnpaidCollectionsPDF(startStr, endStr) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(244, 63, 94); // Rose accent
-    doc.text("UNPAID COLLECTIONS REGISTER (PENDING & OVERDUE)", 15, 24);
+    doc.text("OVERDUE COLLECTIONS REGISTER", 15, 24);
 
     doc.setFontSize(8);
     doc.setTextColor(156, 163, 175);
